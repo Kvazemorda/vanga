@@ -13,10 +13,8 @@ import java.util.*;
 
 public class Main {
     static StringBuilder toFile = new StringBuilder();
-    static String timeBelt = null, testData;
-    static String belt = null, lang = null;
-    SaveToString saveToString;
-    static ArrayList<ProductTweakBit> listOfPrk;
+    static String testData;
+    public static ArrayList<ProductTweakBit> listOfPrk;
     static int countRows;
     static int numImputs;
     static CalcOfMoon calcOfMoon;
@@ -52,8 +50,15 @@ public class Main {
             days.add("2018-08-17.txt");
 
             for(int i = 0; i < days.size(); i++) {
-                file = new File("C:\\Users\\ilyav\\Downloads\\files\\"+ days.get(i));
-                date = dataParser.getDateFromFileName(days.get(i));
+                if(args.length > 0 ){
+                    file = new File("C:\\Users\\ilyav\\Downloads\\files\\"+ args[0]);
+                    date = dataParser.getDateFromFileName(days.get(i));
+                    break;
+                }else {
+                    file = new File("C:\\Users\\ilyav\\Downloads\\files\\"+ days.get(i));
+                    date = dataParser.getDateFromFileName(days.get(i));
+                }
+
                 FileReader fileReader = new FileReader(file);
                 BufferedReader bufferedReader = new BufferedReader(fileReader);
                 StringBuffer stringBuffer = new StringBuffer();
@@ -108,7 +113,9 @@ public class Main {
         }
     }
 
-    public static void checkEachSession(JSONObject jsonObj, String auid, Date date, ArrayList<ProductTweakBit> listOfPrk) {
+    public static void checkEachSession(JSONObject jsonObj, String auid, Date date,
+                                        ArrayList<ProductTweakBit> listOfPrk) {
+        boolean wasDownload = jsonObj.toString().contains("downloadTime");
         for (Object key : jsonObj.keySet()) {
             //based on you key types
             String keyStr = (String) key;
@@ -118,7 +125,9 @@ public class Main {
                 ProductTweakBit prk = new ProductTweakBit(auid + "." + keyStr);
                 // сохраняю кол-во сессий
                 prk.setSessionCount(String.valueOf((((String) key).length()-1)));
+                prk.setDownload(wasDownload);
                 prk.setDateOfVizit(date);
+
                 dataParser.parsingOfSession((JSONObject) keyValue, prk, date);
 
                 if(prk.getVisitHourOfDay() != null
