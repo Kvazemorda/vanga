@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.TreeMap;
 
 @WebServlet("/get_predict_for_du")
 public class QueryGetterServlet extends HttpServlet {
@@ -25,18 +24,13 @@ public class QueryGetterServlet extends HttpServlet {
         try{
             ServletContext context = getServletContext();
             resp.setStatus(200);
-            resp.setContentType("text/xml");
-            PrintWriter writer=resp.getWriter();
-            String anwser = learnedModel.predict(initParamsForPredictBean.safeParamsFromLandToMap(req, context), context);
-            System.out.println("answer = " + anwser);
-            writer.println(anwser);
-            writer.append(anwser);
+            PrintWriter out=resp.getWriter();
+            double anwser = learnedModel.predict(initParamsForPredictBean.safeParamsFromLandToMap(req, context), context);
+            out.append(String.valueOf(anwser));
         }catch (NullPointerException e){
             e.printStackTrace();
             resp.setStatus(400);
-            resp.setContentType("text/xml");
             PrintWriter writer=resp.getWriter();
-            writer.println("Error");
             writer.append("Error");
         }
 

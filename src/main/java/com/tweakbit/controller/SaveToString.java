@@ -6,9 +6,9 @@ import java.util.TreeMap;
 
 public class SaveToString {
     public  TreeMap<String, Integer> os, browser, errors, hours, belt, timeBelt, lang, sessions, size, kw, content,
-            clickId, marker, clientId, week;
+            clickId, marker, clientId, week, sizeHigh;
     public int osCount, browserCount, errorsCount, hoursCount, beltCount, timeBeltCount, langCount, contentCount,
-            sessionCount, sizeCount, kwCount, clickIdCount, markerCount, clientIdCount, weekCount;
+            sessionCount, sizeCount, kwCount, clickIdCount, markerCount, clientIdCount, weekCount, sizeHighCount;
     public  TreeMap<Params, TreeMap<String,Integer>> listOfTrees;
 
     public SaveToString(TreeMap<Params, TreeMap<String, Integer>> listOfTrees) {
@@ -28,6 +28,7 @@ public class SaveToString {
         marker = listOfTrees.get(Params.MARKERS);
         clientId = listOfTrees.get(Params.CLIENTID);
         week = listOfTrees.get(Params.WEEK);
+        sizeHigh = listOfTrees.get(Params.SIZEHIGH);
     }
 
     public SaveToString() {
@@ -47,6 +48,7 @@ public class SaveToString {
         marker = new TreeMap<>();
         clientId = new TreeMap<>();
         week = new TreeMap<>();
+        sizeHigh = new TreeMap<>();
 
         osCount = 0;
         browserCount = 0;
@@ -63,6 +65,7 @@ public class SaveToString {
         markerCount = 0;
         clientIdCount = 0;
         weekCount = 0;
+        sizeHighCount = 0;
     }
 
     public String safeOwnData(Double keyParams){
@@ -117,6 +120,9 @@ public class SaveToString {
         }
         if(keyParams.equals(Params.WEEK)){
            file = addParamToString(week, keyForPredict, Params.WEEK);
+        }
+        if(keyParams.equals(Params.SIZEHIGH)){
+            file = addParamToString(size, keyForPredict, Params.SIZEHIGH);
         }
         return file;
     }
@@ -184,6 +190,9 @@ public class SaveToString {
             case WEEK: weekCount++;
                 treeMap.put(keyError, weekCount);
                 break;
+            case SIZEHIGH: sizeHighCount++;
+                treeMap.put(keyError, sizeHighCount);
+                break;
         }
     }
 
@@ -221,6 +230,7 @@ public class SaveToString {
         listOfTrees.put(Params.MARKERS, marker);
         listOfTrees.put(Params.CLIENTID, clientId);
         listOfTrees.put(Params.WEEK, week);
+        listOfTrees.put(Params.SIZEHIGH, sizeHigh);
         try {
             FileOutputStream fos = new FileOutputStream(folder);
             ObjectOutputStream oos = new ObjectOutputStream(fos);

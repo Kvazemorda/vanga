@@ -19,6 +19,7 @@ public class ProductTweakBit {
     private String belt;
     private String sessionCount;
     private String size;
+    private String sizeHigh;
     private int purchase;
     double revenue;
     private String currency;
@@ -31,6 +32,14 @@ public class ProductTweakBit {
     private int weekVisit;
 
     public ProductTweakBit() {
+    }
+
+    public String getSizeHigh() {
+        return sizeHigh;
+    }
+
+    public void setSizeHigh(String sizeHigh) {
+        this.sizeHigh = sizeHigh;
     }
 
     public Date getDateOfVizit() {

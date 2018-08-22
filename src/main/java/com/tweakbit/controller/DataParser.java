@@ -5,6 +5,10 @@ import com.tweakbit.driverupdater.model.enties.ProductTweakBit;
 import com.tweakbit.model.Params;
 import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -15,11 +19,15 @@ public class DataParser {
     CalcOfMoon calcOfMoon;
     TreeMap<Params,TreeMap<String,Integer>> labelsOfTree;
     ProductTweakBit app;
+    File fileForQuery;
+
+    Boolean safeDataForQuery;
 
     public DataParser(StringBuilder toFile) {
         this.toFile = toFile;
         this.saveToString = new SaveToString();
         this.calcOfMoon = new CalcOfMoon();
+        this.safeDataForQuery = false;
     }
 
     public DataParser(StringBuilder toFile, ProductTweakBit app, TreeMap<Params,
@@ -29,6 +37,7 @@ public class DataParser {
         this.app = app;
         this.saveToString = new SaveToString(labelsOfTree);
         this.calcOfMoon = new CalcOfMoon();
+        this.safeDataForQuery = false;
         saveDataToAppFromHttp(this.app, req);
         saveToFile(app);
     }
@@ -51,6 +60,7 @@ public class DataParser {
         app.setClkid(req.getParameter("clkid"));
         app.setBrowser(getBrowserFromData(req.getParameter("browser")));
         app.setSize(getScreenWide(req.getParameter("screenSize")));
+        app.setSizeHigh(getScreenHigh(req.getParameter("screenSize")));
         app.setMarker(req.getParameter("marker"));
         app.setKwFromGetOfUrl(req.getParameter("kw"));
         app.setContentFromGetOfUrl(req.getParameter("content"));
@@ -68,20 +78,7 @@ public class DataParser {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
         return date;
-    }
-
-    private void changeCurrancyToUSD(ProductTweakBit prk) {
-        if(prk.getCurrency().equals("EUR")){
-            prk.setRevenue(prk.getRevenue() * 1.17);
-        }else if(prk.getCurrency().equals("AUD")){
-            prk.setRevenue(prk.getRevenue() * 0.74);
-        }else if(prk.getCurrency().equals("GBP")){
-            prk.setRevenue(prk.getRevenue()* 1.31);
-        }else if(prk.getCurrency().equals("CAD")){
-            prk.setRevenue(prk.getRevenue() * 0.76);
-        }
     }
 
     public int getRowsFromDataSet(StringBuilder toFile) {
@@ -95,52 +92,79 @@ public class DataParser {
         return splitLine.length;
     }
 
-    public void parsingOfSession(JSONObject jsonObject, ProductTweakBit app, Date date) {
+    public void parsingOfSession(JSONObject jsonObject, ProductTweakBit app, Date date, int sessionCount) {
+        if(safeDataForQuery  && jsonObject.toString().contains("/land/driver-updater/")){
+            if((jsonObject.has("downloadTime") || app.isDownload())){
+                toFile.append(1).append("@");
+            }else {
+                toFile.append(0).append("@");
+            }
+            toFile.append("&sessions=").append(sessionCount);
+        }
         setWeekFromDateToApp(app, date);
         for (Object key : jsonObject.keySet()) {
             String keyStr = (String) key;
             Object keyValue = jsonObject.get(keyStr);
+            if(safeDataForQuery && jsonObject.toString().contains("/land/driver-updater/")){
+                if(!keyStr.equals("get") && !keyStr.equals("url") && !keyStr.equals("clientId")
+                        && !keyStr.equals("gclid") && !keyStr.equals("clkid") && !key.equals("msclkid")
+                        && !keyStr.equals("purchase")){
+                        toFile.append("&").append(keyStr).append("=").append(keyValue.toString());
+                    }
+                    if(keyValue.toString().contains("kw=")){
+                        toFile.append("&").append("kw=")
+                                .append(getValueFromGet(keyValue.toString(), "kw=", "&"));
+                    }
+                    if(keyValue.toString().contains("content=")){
+                        toFile.append("&").append("content=")
+                                .append(getValueFromGet(keyValue.toString(),"content=", "&"));
+                    }
+            } else {
+                if (keyStr.equals("url")) {
+                    String value = keyValue.toString();
+                    getProduct(value, app);
+                    // сохраняю имя ошибки из wikifixes из рекламы
+                    app.setKeyError(getParamFromWiki(value));
+                }
 
-            if (keyStr.equals("url")) {
-                String value = keyValue.toString();
-                getProduct(value, app);
-                // сохраняю имя ошибки из wikifixes из рекламы
-                app.setKeyError(getParamFromWiki(value));
-            }
+                if (keyStr.equals("lang")) {
+                    app.setLang(keyValue.toString());
+                }
 
-            if (keyStr.equals("lang")){
-                app.setLang(keyValue.toString());
-            }
+                if (keyStr.equals("downloadTime")) {
+                    app.setDownload(true);
+                    app.setDownloadHourOfDay(getTime(keyValue.toString())[2]);
+                }
+                if (keyStr.equals("time")) {
+                    getTimeAndTimeZoneFromData(keyValue.toString(), app);
+                }
 
-            if(keyStr.equals("downloadTime")){
-                app.setDownload(true);
-                app.setDownloadHourOfDay(getTime(keyValue.toString())[2]);
-            }
-            if(keyStr.equals("time")){
-                getTimeAndTimeZoneFromData(keyValue.toString(), app);
-            }
+                if (keyStr.equals("os")) {
+                    app.setOs(getOsFromData(keyValue.toString()));
+                }
+                if (keyStr.equals("clkid")) {
+                    app.setClkid(keyValue.toString());
+                }
 
-            if(keyStr.equals("os")){
-                app.setOs(getOsFromData(keyValue.toString()));
-            }
-            if(keyStr.equals("clkid")){
-                app.setClkid(keyValue.toString());
-            }
+                if (keyStr.equals("browser")) {
+                    app.setBrowser(getBrowserFromData(keyValue.toString()));
+                }
+                if (keyStr.equals("screenSize")) {
+                    app.setSize(getScreenWide(keyValue.toString()));
+                    app.setSizeHigh(getScreenHigh(keyValue.toString()));
+                }
+                if (keyStr.equals("marker")) {
+                    app.setMarker(keyValue.toString());
+                }
 
-            if(keyStr.equals("browser")){
-                app.setBrowser(getBrowserFromData(keyValue.toString()));
-            }
-            if(keyStr.equals("screenSize")){
-                app.setSize(getScreenWide(keyValue.toString()));
-            }
-            if(keyStr.equals("marker")){
-                app.setMarker(keyValue.toString());
-            }
+                if (keyStr.equals("get")) {
+                    setGetToAppFromData(app, keyValue.toString());
 
-            if(keyStr.equals("get")){
-                setGetToAppFromData(app, keyValue.toString());
-
+                }
             }
+        }
+        if(safeDataForQuery){
+            toFile.append("\n");
         }
     }
 
@@ -154,16 +178,28 @@ public class DataParser {
     }
 
     private String getScreenWide(String keyValue) {
-        return keyValue.toString().split("x")[0];
+        if(keyValue == null){
+            return "null";
+        }else return keyValue.toString().split("x")[0];
+    }
+
+    private String getScreenHigh(String keyValue) {
+        if(keyValue == null){
+            return "null";
+        }else return keyValue.toString().split("x")[1];
     }
 
     public String getBrowserFromData(String keyValue) {
-        if(keyValue.toString().contains("Mozilla")){
-             return  "Mozilla";
-        }else if(isFamousBrowsers(keyValue.toString())){
-            return keyValue.toString();
+        if(keyValue != null){
+            if(keyValue.toString().contains("Mozilla")){
+                return  "Mozilla";
+            }else if(isFamousBrowsers(keyValue.toString())){
+                return keyValue.toString();
+            }else {
+                return "Other browser";
+            }
         }else {
-            return "Other browser";
+            return "null";
         }
     }
 
@@ -181,9 +217,16 @@ public class DataParser {
     }
 
     private void setTimeAndTimeZoneToApp(ProductTweakBit prk, String[] timeVizit) {
-        prk.setVisitHourOfDay(timeVizit[2]);
-        prk.setBeltTime(timeVizit[1]);
-        prk.setBelt(timeVizit[0]);
+        if(timeVizit !=null){
+            prk.setVisitHourOfDay(timeVizit[2]);
+            prk.setBeltTime(timeVizit[1]);
+            prk.setBelt(timeVizit[0]);
+        }else {
+            prk.setVisitHourOfDay("0");
+            prk.setBeltTime("null");
+            prk.setBelt("null");
+        }
+
     }
 
     // возвращаем ОС юзера
@@ -250,44 +293,51 @@ public class DataParser {
 
     public String[] getTime(String downloadTime){
         String[] time = new String[3];
-        //  "Fri Jul 06 2018 15:39:48 GMT+1200"
-        String timeEndPart = downloadTime.substring(downloadTime.indexOf(":")-2);
-        String onlyTime = timeEndPart.substring(0,timeEndPart.indexOf(" "));
-        String prepareBelt = timeEndPart.substring(timeEndPart.indexOf(" "));
-        prepareBelt = prepareBelt.trim();
-        String[] splitBelt = null;
-        if(prepareBelt.contains("-")){
-            splitBelt = prepareBelt.split("-");
-            if(splitBelt.length >= 2){
-                splitBelt[1] = "-" + splitBelt[1];
+        if(downloadTime != null) {
+            //  "Fri Jul 06 2018 15:39:48 GMT+1200"
+            String timeEndPart = downloadTime.substring(downloadTime.indexOf(":") - 2);
+            String onlyTime = timeEndPart.substring(0, timeEndPart.indexOf(" "));
+            String prepareBelt = timeEndPart.substring(timeEndPart.indexOf(" "));
+            prepareBelt = prepareBelt.trim();
+            String[] splitBelt = null;
+            if (prepareBelt.contains("-")) {
+                splitBelt = prepareBelt.split("-");
+                if (splitBelt.length >= 2) {
+                    splitBelt[1] = "-" + splitBelt[1];
+                }
+            } else if (prepareBelt.contains("+")) {
+                splitBelt = prepareBelt.split("\\+");
+                if (splitBelt.length >= 2) {
+                    splitBelt[1] = "+" + splitBelt[1];
+                }
+            } else {
+                splitBelt = prepareBelt.split(" ");
+                if (splitBelt.length >= 2) {
+                    splitBelt[1] = "+" + splitBelt[1];
+                }
             }
-        }else if(prepareBelt.contains("+")){
-            splitBelt = prepareBelt.split("\\+");
-            if(splitBelt.length >= 2){
-                splitBelt[1] = "+" + splitBelt[1];
+            if (splitBelt != null && splitBelt.length >= 2) {
+                time[1] = splitBelt[1];
+                time[0] = splitBelt[0];
             }
+
+            String[] timeParse = onlyTime.split(":");
+            int hourToSecond = Integer.parseInt(timeParse[0]) * 3600;
+            int minToSecond = Integer.parseInt(timeParse[1]) * 60;
+            int second = Integer.parseInt(timeParse[2]);
+            time[2] = String.valueOf((double) (hourToSecond + minToSecond + second));
+            return time;
         }else{
-            splitBelt = prepareBelt.split(" ");
-            if(splitBelt.length >= 2){
-                splitBelt[1] = "+" + splitBelt[1];
-            }
+            return null;
         }
-        if(splitBelt != null && splitBelt.length >= 2){
-            time[1] = splitBelt[1];
-            time[0] = splitBelt[0];
-        }
-
-        String[] timeParse = onlyTime.split(":");
-        int hourToSecond = Integer.parseInt(timeParse[0]) * 3600;
-        int minToSecond = Integer.parseInt(timeParse[1]) * 60;
-        int second = Integer.parseInt(timeParse[2]);
-        time[2] = String.valueOf ((double) (hourToSecond + minToSecond + second));
-
-        return time;
     }
+
     // сохраняю имя продукта
     public void getProduct(String value, ProductTweakBit productTweakBit){
         String druverUpdater = "/driver-updater/";
+        if(safeDataForQuery){
+            druverUpdater = "/land/driver-updater/";
+        }
         String prk = "tweakbit.com/en/land/pc-repair/";
         String pcsup = "pc-speed-up";
         String am = "anti-malware";
@@ -360,20 +410,43 @@ public class DataParser {
         toFile.append(saveToString.safeToString(app.getSessionCount(), Params.SESSIONS));
         toFile.append(saveToString.safeToString(app.getKwFromGetOfUrl(), Params.KW));
         toFile.append(saveToString.safeToString(app.getSize(), Params.SIZE));
-
+        toFile.append(saveToString.safeToString(app.getSizeHigh(), Params.SIZEHIGH));
         //сохраняем дни недели
-      //  toFile.append(saveToString.safeToString(String.valueOf(app.getWeekVisit()), Params.WEEK));
+        //toFile.append(saveToString.safeToString(String.valueOf(app.getWeekVisit()), Params.WEEK));
         //сохраняем время визита "hours"
         toFile.append(saveToString.safeOwnData(Double.valueOf(app.getVisitHourOfDay())));
         toFile.append(saveToString.safeToString(app.getContentFromGetOfUrl(), Params.CONTENT));
         //toFile.append(saveToString.safeToString(app.getClkid(), Params.CLIKID));
         toFile.append(saveToString.safeToString(app.getMarker(), Params.MARKERS));
-        Date azimutDate = new Date(app.getDateOfVizit().getTime() + Double.valueOf(app.getVisitHourOfDay()).intValue());
+      //  Date azimutDate = new Date(app.getDateOfVizit().getTime() + Double.valueOf(app.getVisitHourOfDay()).intValue());
         //дистанция до луны
-        toFile.append(saveToString.safeOwnData(calcOfMoon.distanceOfMoon(azimutDate)));
+     //   toFile.append(saveToString.safeOwnData(calcOfMoon.distanceOfMoon(azimutDate)));
         //сохраняем браузеры
         toFile.append(saveToString.safeToString(app.getBrowser(), Params.BROWSER));
         toFile.append("\n");
+    }
+
+    public void setSafeDataForQuery(Boolean safeDataForQuery) {
+        this.safeDataForQuery = safeDataForQuery;
+        fileForQuery = new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\fileForQuery");
+    }
+
+    public Boolean isSaveDataForQuery() {
+        return safeDataForQuery;
+    }
+
+    public void saveToFile(StringBuilder toFile) throws IOException {
+        BufferedWriter writer = null;
+        try {
+            writer = new BufferedWriter(new FileWriter(fileForQuery));
+            writer.write(toFile.toString());
+        } finally {
+            if(writer != null){
+                writer.close();
+            }
+        }
+
+
     }
 }
 
