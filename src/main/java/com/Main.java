@@ -49,6 +49,10 @@ public class Main {
             days.add("2018-08-17.txt");
             days.add("2018-08-18.txt");
             days.add("2018-08-19.txt");
+            days.add("2018-08-20.txt");
+            days.add("2018-08-21.txt");
+            days.add("2018-08-22.txt");
+            days.add("2018-08-23.txt");
 
             for(int i = 0; i < days.size(); i++) {
                 if(args.length > 0 ){

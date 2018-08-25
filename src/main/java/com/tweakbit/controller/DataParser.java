@@ -326,6 +326,7 @@ public class DataParser {
             int minToSecond = Integer.parseInt(timeParse[1]) * 60;
             int second = Integer.parseInt(timeParse[2]);
             time[2] = String.valueOf((double) (hourToSecond + minToSecond + second));
+            System.out.println(downloadTime + " " + time[0] + " " + time[1] + " " + time[2]);
             return time;
         }else{
             return null;
