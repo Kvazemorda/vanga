@@ -20,7 +20,6 @@ import org.nd4j.linalg.dataset.api.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
-import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Nesterovs;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
@@ -28,12 +27,14 @@ import java.io.File;
 import java.io.IOException;
 
 public class MLPClassifierLeaner {
-     File locationToSave, scaleCof, scaleCof1, locationToSave1;
+     File locationToSave, scaleCof;
 
     public MLPClassifierLeaner(File locationToSave, File scaleCof) {
         this.locationToSave = locationToSave;
         this.scaleCof = scaleCof;
     }
+
+
 
     public void toTrainMachine(int batchSize, int numInputs, int numOutputs, String dataForTrain)
             throws IOException, InterruptedException {
@@ -117,98 +118,11 @@ public class MLPClassifierLeaner {
             INDArray predicted = model.output(featurs, false);
             evaluation.eval(lables, predicted);
         System.out.println(evaluation.stats());
-        newTrainForPredict(Nd4j.hstack(lables, predicted));
 
     }
 
     private void saveTrainModelToFile(File locationToSave, MultiLayerNetwork model, Boolean safeUpdater) throws IOException {
         ModelSerializer.writeModel(model, locationToSave, safeUpdater);
     }
-
-    private void newTrainForPredict(INDArray newFeaters) throws IOException {
-
-        int seed = 123;
-        double learningRate = 0.1;
-        int nEpochs = 300 ;
-        int numHiddenNodes = 15;
-        int numOutputs = 2;
-        int numInputs = newFeaters.columns() - 2;
-        int batchSize = newFeaters.rows();
-
-        DataSet allData = new org.nd4j.linalg.dataset.DataSet(newFeaters
-                .getColumns(2,3/*,4,5,6,7,8,9,10,11,12,13,14,15*/), newFeaters.getColumns(0,1));
-        allData.shuffle();
-
-        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.7);
-
-        DataSet trainingData = testAndTrain.getTrain();
-        DataSet testData = testAndTrain.getTest();
-
-        //We need to normalize our data. We'll use NormalizeStandardize (which gives us mean 0, unit variance):
-        NormalizerStandardize normalizer = new NormalizerStandardize();
-        normalizer.fit(trainingData);           //Collect the statistics (mean/stdev) from the training data. This does not modify the input data
-        normalizer.transform(trainingData);     //Apply normalization to the training data
-        normalizer.transform(testData);         //Apply normalization to the com.tweakbit.driverupdater.trainmodel data. This is using statistics calculated from the *training* set
-
-        // Output the feature means and standard deviations so we can compare them after restoring the normalizer
-        System.out.println("Means original: " + normalizer.getMean());
-        System.out.println("Stds original:  " + normalizer.getStd());
-
-        // Now we want to save the normalizer to a binary file. For doing this, one can use the NormalizerSerializer.
-        NormalizerSerializer serializer = NormalizerSerializer.getDefault();
-
-        // Save the normalizer to a temporary file
-        scaleCof1 = new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\du-scale1");
-        serializer.write(normalizer, scaleCof1);
-
-        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(seed) //include a random seed for reproducibility
-                .activation(Activation.RELU)
-                .weightInit(WeightInit.XAVIER)
-                .updater(new Nesterovs(learningRate, 0.98))
-                .l2(learningRate * 0.005) // regularize learning model
-                .regularization(true)
-                .list()
-                .layer(0, new DenseLayer.Builder() //create the first input layer.
-                        .nIn(numInputs)
-                        .nOut(numHiddenNodes)
-                        .build())
-                .layer(1, new DenseLayer.Builder() //create the second input layer
-                        .nIn(numHiddenNodes)
-                        .nOut(numHiddenNodes + 30)
-                        .build())
-                .layer(2, new DenseLayer.Builder() //create the second input layer
-                        .nIn(numHiddenNodes + 30)
-                        .nOut(numHiddenNodes + 30)
-                        .build())
-                .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD) //create hidden layer
-                        .activation(Activation.SOFTMAX)
-                        .nIn(numHiddenNodes + 30)
-                        .nOut(numOutputs)
-                        .build())
-                .pretrain(false).backprop(true) //use backpropagation to adjust weights
-                .build();
-
-        MultiLayerNetwork model = new MultiLayerNetwork(conf);
-        model.init();
-        model.setListeners(new ScoreIterationListener(10));
-
-        for (int n = 0; n < nEpochs; n++){
-            model.fit(trainingData);
-        }
-        locationToSave1 = new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\train_model_for_du.zip1");
-        saveTrainModelToFile(locationToSave1, model, false);
-
-        System.out.println("Evaluete model...");
-        System.out.println(newFeaters.rows());
-        Evaluation evaluation = new Evaluation(numOutputs);
-
-        INDArray featurs = testData.getFeatureMatrix();
-        INDArray lables = testData.getLabels();
-        INDArray predicted = model.output(featurs, false);
-        evaluation.eval(lables, predicted);
-        System.out.println(evaluation.stats());
-    }
-
 
 }

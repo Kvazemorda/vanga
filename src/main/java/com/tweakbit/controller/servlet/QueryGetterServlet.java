@@ -21,17 +21,16 @@ public class QueryGetterServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        PrintWriter out = resp.getWriter();
         try{
             ServletContext context = getServletContext();
             double anwser = learnedModel.predict(initParamsForPredictBean.safeParamsFromLandToMap(req, context), context);
-            PrintWriter out = resp.getWriter();
             resp.setStatus(200);
             out.append(String.valueOf(anwser));
         }catch (NullPointerException e){
             e.printStackTrace();
             resp.setStatus(400);
-            PrintWriter writer = resp.getWriter();
-            writer.append("Error");
+            out.append("Error");
         }
 
     }

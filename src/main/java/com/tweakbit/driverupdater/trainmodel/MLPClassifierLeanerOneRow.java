@@ -18,7 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class MLPClassifierLeanerOneRow {
-    static String testData = "C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\toTrainMachine\\java\\com\\tweakbit\\driverupdater\\trainmodel\\test2.csv";
+    static String testData = "C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\toTrainMachine\\java\\com\\tweakbit\\driverupdater\\trainmodel\\test1.csv";
     static int rows = 0;
     static int inputs = 0;
 
@@ -40,7 +40,7 @@ public class MLPClassifierLeanerOneRow {
             throws IOException, InterruptedException {
         try {
                 RecordReader rr = new CSVRecordReader();
-                rr.initialize(new FileSplit(new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\toTrainMachine\\java\\com\\tweakbit\\driverupdater\\trainmodel\\test2.csv")));
+                rr.initialize(new FileSplit(new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\toTrainMachine\\java\\com\\tweakbit\\driverupdater\\trainmodel\\test1.csv")));
                 DataSetIterator trainIter = new RecordReaderDataSetIterator(rr, batchSize, 0, numOutputs);
                 DataSet allData = trainIter.next();
 

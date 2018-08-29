@@ -1,8 +1,9 @@
 package com;
 
 import com.tweakbit.controller.DataParser;
-import com.tweakbit.driverupdater.model.enties.ProductTweakBit;
+import com.tweakbit.driverupdater.model.enties.VisitToTweakBit;
 import com.tweakbit.driverupdater.trainmodel.MLPClassifierLeaner;
+import com.tweakbit.model.AUID;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,14 +14,18 @@ import java.util.*;
 public class Main {
     static StringBuilder toFile = new StringBuilder();
     static String testData;
-    public static ArrayList<ProductTweakBit> listOfPrk;
-    static int countRows;
+    public static ArrayList<VisitToTweakBit> listOfPrk;
+    static int countRows, downloaded, goAway;
     static int numImputs;
     static CalcOfMoon calcOfMoon;
     static Date date;
     static DataParser dataParser;
+    public static TreeMap<String, AUID> auids;
 
     public static void main(String[] args) {
+        downloaded = 0;
+        goAway = 0;
+        auids = new TreeMap<>();
         dataParser = new DataParser(toFile);
         calcOfMoon = new CalcOfMoon();
         countRows = 0;
@@ -81,8 +86,8 @@ public class Main {
                         // находим все сессии одного AUID
                         String session = obj.getJSONObject("session").toString();
                         JSONObject sessionObj = new JSONObject(session);
-                        //перебираем сессии юзера
-                        checkEachSession(sessionObj, splitLine[0], date, listOfPrk);
+                        //перебираем сессии каждого AUID
+                        checkEachSession(sessionObj, date, splitLine[0]);
                     }catch (JSONException e){
                         e.printStackTrace();
                         System.out.println("строка файла " + countRow);
@@ -100,29 +105,58 @@ public class Main {
         try {
             // Если подготавливаем параметры к обучению, то в файл будет сохраняться значения 1,3,1,4,2.. итд
             // Если подготавилваем параметры к тестирования, то в файл будет сохраняться параметр запроса
-            if(!dataParser.isSaveDataForQuery()){
                 PrintWriter pwTestData = new PrintWriter(new File(testData));
-                for(ProductTweakBit productTweakBit: listOfPrk){
-                    dataParser.saveToFile(productTweakBit);
+                PrintWriter pwForRequest = new PrintWriter(new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\test1.csv"));
+                int countRow = 0;
+                for(Map.Entry<String,AUID> map: auids.entrySet()){
+                    AUID auid = map.getValue();
+                    int session = 1;
+                    VisitToTweakBit previsousVisit = new VisitToTweakBit();
+                    if(auid.isWasDownload()){
+                        downloaded++;
+                    }
+                    if(!auid.isWasDownload()){
+                        goAway++;
+                    }
+                    for(VisitToTweakBit app: auid.getSetOfVisits()){
+                        app.setSessionCount(String.valueOf(session));
+                        app.setDownload(auid.isWasDownload());
+                        if(!dataParser.isSaveDataForQuery()){
+                            dataParser.saveToFile(app, ",", true, dataParser.isSaveDataForQuery());
+                            dataParser.saveToFile(previsousVisit, "\n", false, dataParser.isSaveDataForQuery());
+                        }else {
+                            dataParser.saveToFile(app, ",", true, dataParser.isSaveDataForQuery());
+                            dataParser.saveToFile(previsousVisit, "\n", false, dataParser.isSaveDataForQuery());
+                        }
+                        previsousVisit = app;
+                        countRow++;
+                        session++;
+                    }
                 }
-                pwTestData.write(toFile.toString());
-                pwTestData.close();
 
-                numImputs = dataParser.getRowsFromDataSet(toFile) - 1;
-                dataParser.getSaveToString().safeMapsOfKeysToFile();   // сохраняю список параметров
+                if(!dataParser.isSaveDataForQuery()) {
+                    System.out.println("AUIDS = " + auids.size());
+                    System.out.println("downloaded = " + downloaded + " goAway = " + goAway);
 
-                // Prepare a temporary file to save to and load from
-                File scaleCof = new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\du-scale");
+                    pwTestData.write(toFile.toString());
+                    pwTestData.close();
 
-                // save toTrainMachine model
-                File locationToSave = new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\train_model_for_du.zip");
+                    numImputs = dataParser.getRowsFromDataSet(toFile) - 1;
+                    dataParser.getSaveToString().safeMapsOfKeysToFile();   // сохраняю список параметров
 
+                    // Prepare a temporary file to save to and load from
+                    File scaleCof = new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\du-scale");
 
-                MLPClassifierLeaner mlp = new MLPClassifierLeaner(locationToSave, scaleCof);
-                mlp.toTrainMachine(listOfPrk.size(), numImputs, 2, testData);
-            }else {
-                dataParser.saveToFile(dataParser.getToFile());
-            }
+                    // save toTrainMachine model
+                    File locationToSave = new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\train_model_for_du.zip");
+
+                    MLPClassifierLeaner mlp = new MLPClassifierLeaner(locationToSave, scaleCof);
+                    mlp.toTrainMachine(countRow, numImputs, 2, testData);
+                }else {
+                    pwForRequest.write(toFile.toString());
+                    pwForRequest.close();
+                }
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -132,29 +166,41 @@ public class Main {
         }
     }
 
-    public static void checkEachSession(JSONObject jsonObj, String auid, Date date,
-                                        ArrayList<ProductTweakBit> listOfPrk) {
-        boolean wasDownload = jsonObj.toString().contains("downloadTime");
+    private static AUID getAUIDFromMap(String s) {
+
+        if(auids.containsKey(s)){
+            return auids.get(s);
+        }else {
+            auids.put(s, new AUID(s));
+            return getAUIDFromMap(s);
+        }
+    }
+
+    public static void checkEachSession(JSONObject jsonObj, Date date, String auidText) {
         int sessionCount = 1;
         for (Object key : jsonObj.keySet()) {
             //based on you key types
             String keyStr = (String) key;
             Object keyValue = jsonObj.get(keyStr);
             if (keyValue instanceof JSONObject) {
-                ProductTweakBit prk = new ProductTweakBit(auid + "." + keyStr);
+
+                VisitToTweakBit visit = new VisitToTweakBit();
                 // сохраняю кол-во сессий
-                prk.setSessionCount(String.valueOf(sessionCount));
-                // если был скачан в другой сессии но с этим же auid, то считаем, что скачает
-                prk.setDownload(wasDownload);
+                visit.setSessionCount(String.valueOf(sessionCount));
                 // сохраняю дату визита из имени файла с данными
-                prk.setDateOfVizit(date);
+                visit.setDateOfVizit(date);
 
-                dataParser.parsingOfSession((JSONObject) keyValue, prk, date, sessionCount);
-                if(prk.getVisitHourOfDay() != null
-                        && prk.getProductName() != null
-                        && prk.getProductName().equals("du")) {
-
-                    listOfPrk.add(prk);
+                dataParser.parsingOfSession((JSONObject) keyValue, visit, date, sessionCount);
+                if(visit.getVisitHourOfDay() != null
+                        && visit.getProductName() != null
+                        && visit.getProductName().equals("du")) {
+                    //находим существущий auid или создаем новый
+                    AUID auid = getAUIDFromMap(auidText);
+                    if(visit.isDownload()){
+                        auid.setWasDownload(visit.isDownload());
+                    }
+                    visit.setAuid(auidText);
+                    auid.getSetOfVisits().add(visit);
                 }
             }
             sessionCount++;

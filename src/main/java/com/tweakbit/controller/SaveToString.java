@@ -6,9 +6,9 @@ import java.util.TreeMap;
 
 public class SaveToString {
     public  TreeMap<String, Integer> os, browser, errors, hours, belt, timeBelt, lang, sessions, size, kw, content,
-            clickId, marker, clientId, week, sizeHigh;
+            clickId, marker, clientId, week, sizeHigh, url;
     public int osCount, browserCount, errorsCount, hoursCount, beltCount, timeBeltCount, langCount, contentCount,
-            sessionCount, sizeCount, kwCount, clickIdCount, markerCount, clientIdCount, weekCount, sizeHighCount;
+            sessionCount, sizeCount, kwCount, clickIdCount, markerCount, clientIdCount, weekCount, sizeHighCount, urlCount;
     public  TreeMap<Params, TreeMap<String,Integer>> listOfTrees;
 
     public SaveToString(TreeMap<Params, TreeMap<String, Integer>> listOfTrees) {
@@ -29,6 +29,7 @@ public class SaveToString {
         clientId = listOfTrees.get(Params.CLIENTID);
         week = listOfTrees.get(Params.WEEK);
         sizeHigh = listOfTrees.get(Params.SIZEHIGH);
+        url = listOfTrees.get(Params.URL);
     }
 
     public SaveToString() {
@@ -49,6 +50,7 @@ public class SaveToString {
         clientId = new TreeMap<>();
         week = new TreeMap<>();
         sizeHigh = new TreeMap<>();
+        url = new TreeMap<>();
 
         osCount = 0;
         browserCount = 0;
@@ -66,9 +68,13 @@ public class SaveToString {
         clientIdCount = 0;
         weekCount = 0;
         sizeHighCount = 0;
+        urlCount = 0;
     }
 
     public String safeOwnData(Double keyParams){
+        if(keyParams == null){
+            return "null,";
+        }else
         return keyParams + ",";
     }
 
@@ -123,6 +129,9 @@ public class SaveToString {
         }
         if(keyParams.equals(Params.SIZEHIGH)){
             file = addParamToString(size, keyForPredict, Params.SIZEHIGH);
+        }
+        if(keyParams.equals(Params.URL)){
+            file = addParamToString(url, keyForPredict, Params.URL);
         }
         return file;
     }
@@ -193,6 +202,9 @@ public class SaveToString {
             case SIZEHIGH: sizeHighCount++;
                 treeMap.put(keyError, sizeHighCount);
                 break;
+            case URL: urlCount++;
+                treeMap.put(keyError, urlCount);
+                break;
         }
     }
 
@@ -231,6 +243,7 @@ public class SaveToString {
         listOfTrees.put(Params.CLIENTID, clientId);
         listOfTrees.put(Params.WEEK, week);
         listOfTrees.put(Params.SIZEHIGH, sizeHigh);
+        listOfTrees.put(Params.URL, url);
         try {
             FileOutputStream fos = new FileOutputStream(folder);
             ObjectOutputStream oos = new ObjectOutputStream(fos);

@@ -1,113 +1,123 @@
-import com.Main;
-import com.tweakbit.controller.SaveToString;
-import com.tweakbit.driverupdater.model.enties.ProductTweakBit;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.*;
 import java.net.URISyntaxException;
-
-import java.net.URLDecoder;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
 
 public class QueryTest {
-    static StringBuilder toFile = new StringBuilder();
-    static String timeBelt = null, testData;
-    static String belt = null, lang = null;
-    static SaveToString saveToString = new SaveToString();
-    static List<ProductTweakBit> listOfPrk;
-    static int countRows;
-    static int numImputs;
+    static Integer truePositive = 0;
+    static Integer falsePositive = 0;
+    static Integer falseNegative = 0;
+    static Integer trueNegative = 0;
+    static Integer label0Predict0, label1Predict0, label1Predict1, label0Predict1;
+    static StringBuilder string = new StringBuilder();
 
-    public static String sendUrl(String[] valueParams, String[] keyParams) throws URISyntaxException, IOException {
-        URIBuilder builder = new URIBuilder("http://localhost:8080/vanga-predict/get_predict_for_du");
-        for(int i = 0; i < keyParams.length; i++){
-            builder.setParameter(keyParams[i], valueParams[i]);
+    public static void sendUrl() throws URISyntaxException, IOException {
+        label0Predict0 = 0;
+        label0Predict1 = 0;
+        label1Predict0 = 0;
+        label1Predict1 = 0;
+        //97.107.137.201
+        String path = "http://localhost:8080/vanga-predict/get_predict_for_du?";
+        StringBuilder stringBuildor = new StringBuilder();
+        File file = new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\test1.csv");
+        ArrayList<String> lines = getParamsFromFile(file);
+        System.out.println(lines.size());
+        int count = 0;
+        for(String line: lines){
+            count++;
+                line = line.replace(" ", "+");
+                String[] split = line.split(",");
+                line = split[1];
+
+                URIBuilder builder = new URIBuilder(path + line);
+                HttpGet request = new HttpGet(builder.build());
+                request.addHeader("Content-Type", "multipart/related;");
+                HttpClient client = HttpClientBuilder.create().build();
+                client.execute(request);
+
+                HttpResponse response = client.execute(request);
+                String answer = new BasicResponseHandler().handleResponse(response);
+                splitAnswerToDouble(answer, Integer.valueOf(split[0]), line);
+                stringBuildor.append(split[0]).append(" ").append(answer).append("\n");
+
+        }
+        printPrediction(stringBuildor.toString());
+        double accuracy = (double)(truePositive + trueNegative)
+                /(double) (truePositive + falsePositive + falseNegative + trueNegative);
+        double precision = (double) truePositive/(double)(truePositive + falsePositive);
+        double recall = (double) truePositive/(double)(truePositive + falseNegative);
+        double f1score = (double) 2*(recall * precision)/(double) (recall + precision);
+        System.out.println("accuracy = " + accuracy);
+        System.out.println("precision = " + precision);
+        System.out.println("recall = " + recall);
+        System.out.println("f1score = " + f1score);
+        System.out.println("label 0, predict 0 " + trueNegative);
+        System.out.println("label 0, predict 1 " + falsePositive);
+        System.out.println("label 1, predict 0 " + falseNegative);
+        System.out.println("label 1, predict 1 " + truePositive);
+    }
+
+    private static void splitAnswerToDouble(String answer, Integer actual, String params) {
+        Double one = Double.valueOf(answer);
+        boolean predictYes = false;
+        boolean predictNo = false;
+        if(one >= 0.50 )
+            predictYes = true;
+        else {
+            predictNo = true;
         }
 
-        HttpGet request = new HttpGet(builder.build());
-        HttpClient client = HttpClientBuilder.create().build();
-
-        HttpResponse response = client.execute(request);
-        String responseString = new BasicResponseHandler().handleResponse(response);
-        return responseString;
+        if (predictNo && actual == 0){
+            trueNegative++;
+        }
+        if(predictYes && actual == 0){
+            falsePositive++;
+            string.append(actual).append(" ").append(answer).append(" ").append(params).append("\n");
+        }
+        if(predictYes && actual == 1){
+            truePositive++;
+        }
+        if(predictNo && actual == 1){
+            falseNegative++;
+        }
     }
 
     public static void main(String[] args) throws IOException, URISyntaxException {
-        Main main = new Main();
-        args = new String[1];
-        args[0] = "2018-08-17";
-        main.main(args);
-        printPredicion();
-        ArrayList<ProductTweakBit> listOfDU = main.listOfPrk;
+        //Main main = new Main();
+        //args = new String[1];
+        //args[0] = "2018-08-27.txt";
+        //main.main(args);
+        sendUrl();
     }
 
-    public static void printPredicion() throws IOException, URISyntaxException {
+    public static void printPrediction(String answer) throws IOException, URISyntaxException {
         PrintWriter out = new PrintWriter("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\test\\java\\resp.txt");
-        StringBuilder builder = new StringBuilder();
-        String[] keyParams = createKeyParams();
-        System.out.println(listOfPrk.size());
-        for(int i = 0; i < 300; i++){
-                        /*
-                        sort a   table for predict
-                        os
-                        belt
-                        timeBelt
-                        lang
-                        sessions
-                        size
-                        hours
-                        browser
-                        */
-            String[] value = createValue(listOfPrk.get(i));
-            builder.append(sendUrl(value, keyParams));
-            builder.append("\n");
-        }
-        out.print(builder.toString());
+        out.print(answer);
         out.close();
+
+        PrintWriter fileFolsPositive = new PrintWriter("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\falsePositive");
+        fileFolsPositive.print(string);
+        fileFolsPositive.close();
     }
 
-    private static String[] createValue(ProductTweakBit productTweakBit) {
-        String[] value = new String[8];
-        value[0] = productTweakBit.getOs();
-        value[1] = productTweakBit.getBelt();
-        value[2] = productTweakBit.getBeltTime();
-        value[3] = productTweakBit.getLang();
-        value[4] = productTweakBit.getSessionCount();
-        value[5] = productTweakBit.getSize();
-        value[6] = productTweakBit.getVisitHourOfDay();
-        value[7] = productTweakBit.getBrowser();
-        for (int i = 0; i < value.length; i++){
-           if(value[i] == null){
-               value[i] = "null";
-           }
+
+    public static ArrayList<String> getParamsFromFile(File file) throws IOException {
+        String line = null;
+        ArrayList<String> lines = new ArrayList<>();
+        FileReader fileReader = new FileReader(file);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        StringBuffer stringBuffer = new StringBuffer();
+        int countRow = 0;
+        while ((line = bufferedReader.readLine()) != null) {
+            lines.add(line);
         }
-        return value;
-    }
-
-    private static String[] createKeyParams() {
-        String[] keyParams = new String[8];
-        keyParams[0] = "os";
-        keyParams[1] = "belt";
-        keyParams[2] = "timeBelt";
-        keyParams[3] = "lang";
-        keyParams[4] = "sessions";
-        keyParams[5] = "size";
-        keyParams[6] = "hours";
-        keyParams[7] = "browser";
-
-        return keyParams;
+        return lines;
     }
 }
 

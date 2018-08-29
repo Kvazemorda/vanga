@@ -1,7 +1,7 @@
 package com.tweakbit.controller.bean;
 
 import com.tweakbit.controller.DataParser;
-import com.tweakbit.driverupdater.model.enties.ProductTweakBit;
+import com.tweakbit.driverupdater.model.enties.VisitToTweakBit;
 import com.tweakbit.model.Params;
 
 import javax.ejb.Local;
@@ -38,7 +38,7 @@ public class PrepareParamsForPredict {
 
     public  String safeParamsFromLandToMap(HttpServletRequest req, ServletContext context){
         if(req != null){
-            ProductTweakBit app = new ProductTweakBit();
+            VisitToTweakBit app = new VisitToTweakBit();
             DataParser dataParser = new DataParser(new StringBuilder(), app, initializeTheTreeOfParams(context), req);
             return dataParser.getToFile().toString();
         }else {
