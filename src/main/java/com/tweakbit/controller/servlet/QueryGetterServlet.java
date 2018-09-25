@@ -19,6 +19,8 @@ public class QueryGetterServlet extends HttpServlet {
     @EJB PrepareParamsForPredict initParamsForPredictBean;
     @EJB PredictModelBean learnedModel;
 
+
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter out = resp.getWriter();
@@ -33,6 +35,18 @@ public class QueryGetterServlet extends HttpServlet {
             out.append("Error");
         }
 
+    }
+
+    @Override
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        setAccessControlHeaders(resp);
+        resp.setStatus(HttpServletResponse.SC_OK);
+    }
+
+    private void setAccessControlHeaders(HttpServletResponse resp) {
+        resp.setHeader("Access-Control-Allow-Origin", "*");
+        resp.setHeader("Access-Control-Allow-Methods", "GET");
     }
 
 

@@ -1,14 +1,16 @@
 package com.tweakbit.controller;
 
 import com.tweakbit.model.Params;
+
 import java.io.*;
 import java.util.TreeMap;
 
 public class SaveToString {
     public  TreeMap<String, Integer> os, browser, errors, hours, belt, timeBelt, lang, sessions, size, kw, content,
-            clickId, marker, clientId, week, sizeHigh, url;
+            clickId, marker, clientId, week, sizeHigh, url, country, city, subdivision, zip, timeZone, localLang, productName;
     public int osCount, browserCount, errorsCount, hoursCount, beltCount, timeBeltCount, langCount, contentCount,
-            sessionCount, sizeCount, kwCount, clickIdCount, markerCount, clientIdCount, weekCount, sizeHighCount, urlCount;
+            sessionCount, sizeCount, kwCount, clickIdCount, markerCount, clientIdCount, weekCount, sizeHighCount, urlCount,
+    countryCount, cityCount, subdivisionCount, zipCount, timeZoneCount, localLangCount, productNameCount;
     public  TreeMap<Params, TreeMap<String,Integer>> listOfTrees;
 
     public SaveToString(TreeMap<Params, TreeMap<String, Integer>> listOfTrees) {
@@ -30,7 +32,14 @@ public class SaveToString {
         week = listOfTrees.get(Params.WEEK);
         sizeHigh = listOfTrees.get(Params.SIZEHIGH);
         url = listOfTrees.get(Params.URL);
-    }
+        country = listOfTrees.get(Params.COUNTRY);
+        city = listOfTrees.get(Params.CITY);
+        subdivision = listOfTrees.get(Params.SUBDIVISION);
+        zip = listOfTrees.get(Params.ZIP);
+        timeZone  = listOfTrees.get(Params.TIMEZONE);
+        localLang = listOfTrees.get(Params.LOCALLANG);
+        productName = listOfTrees.get(Params.PRODUCT);
+     }
 
     public SaveToString() {
         listOfTrees = new TreeMap<>();
@@ -51,6 +60,13 @@ public class SaveToString {
         week = new TreeMap<>();
         sizeHigh = new TreeMap<>();
         url = new TreeMap<>();
+        country = new TreeMap<>();
+        city = new TreeMap<>();
+        subdivision = new TreeMap<>();
+        zip = new TreeMap<>();
+        timeZone = new TreeMap<>();
+        localLang = new TreeMap<>();
+        productName = new TreeMap<>();
 
         osCount = 0;
         browserCount = 0;
@@ -69,6 +85,13 @@ public class SaveToString {
         weekCount = 0;
         sizeHighCount = 0;
         urlCount = 0;
+        countryCount = 0;
+        cityCount = 0;
+        subdivisionCount = 0;
+        zipCount = 0;
+        timeZoneCount = 0;
+        localLangCount = 0;
+        productNameCount = 0;
     }
 
     public String safeOwnData(Double keyParams){
@@ -128,10 +151,31 @@ public class SaveToString {
            file = addParamToString(week, keyForPredict, Params.WEEK);
         }
         if(keyParams.equals(Params.SIZEHIGH)){
-            file = addParamToString(size, keyForPredict, Params.SIZEHIGH);
+            file = addParamToString(sizeHigh, keyForPredict, Params.SIZEHIGH);
         }
         if(keyParams.equals(Params.URL)){
             file = addParamToString(url, keyForPredict, Params.URL);
+        }
+        if(keyParams.equals(Params.COUNTRY)){
+            file = addParamToString(country, keyForPredict, Params.COUNTRY);
+        }
+        if(keyParams.equals(Params.CITY)){
+            file = addParamToString(city, keyForPredict, Params.CITY);
+        }
+        if(keyParams.equals(Params.SUBDIVISION)){
+            file = addParamToString(subdivision, keyForPredict, Params.SUBDIVISION);
+        }
+        if(keyParams.equals(Params.ZIP)){
+            file = addParamToString(zip, keyForPredict, Params.ZIP);
+        }
+        if(keyParams.equals(Params.TIMEZONE)){
+            file = addParamToString(timeZone, keyForPredict, Params.TIMEZONE);
+        }
+        if(keyParams.equals(Params.LOCALLANG)){
+            file = addParamToString(localLang, keyForPredict, Params.LOCALLANG);
+        }
+        if(keyParams.equals(Params.PRODUCT)){
+            file = addParamToString(productName, keyForPredict, Params.PRODUCT);
         }
         return file;
     }
@@ -205,6 +249,27 @@ public class SaveToString {
             case URL: urlCount++;
                 treeMap.put(keyError, urlCount);
                 break;
+            case COUNTRY: countryCount++;
+                treeMap.put(keyError, countryCount);
+                break;
+            case CITY: cityCount++;
+                treeMap.put(keyError, cityCount);
+                break;
+            case SUBDIVISION: subdivisionCount++;
+                treeMap.put(keyError, subdivisionCount);
+                break;
+            case ZIP: zipCount++;
+                treeMap.put(keyError, zipCount);
+                break;
+            case TIMEZONE: timeZoneCount++;
+                treeMap.put(keyError, timeZoneCount);
+                break;
+            case LOCALLANG: localLangCount++;
+                treeMap.put(keyError, localLangCount);
+                break;
+            case PRODUCT: productNameCount++;
+                treeMap.put(keyError, productNameCount);
+                break;
         }
     }
 
@@ -244,6 +309,14 @@ public class SaveToString {
         listOfTrees.put(Params.WEEK, week);
         listOfTrees.put(Params.SIZEHIGH, sizeHigh);
         listOfTrees.put(Params.URL, url);
+        listOfTrees.put(Params.COUNTRY, country);
+        listOfTrees.put(Params.CITY, city);
+        listOfTrees.put(Params.SUBDIVISION, subdivision);
+        listOfTrees.put(Params.ZIP, zip);
+        listOfTrees.put(Params.TIMEZONE, timeZone);
+        listOfTrees.put(Params.LOCALLANG, localLang);
+        listOfTrees.put(Params.PRODUCT, productName);
+
         try {
             FileOutputStream fos = new FileOutputStream(folder);
             ObjectOutputStream oos = new ObjectOutputStream(fos);

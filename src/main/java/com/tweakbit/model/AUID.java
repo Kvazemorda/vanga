@@ -8,10 +8,20 @@ public class AUID {
     String auid;
     TreeSet<VisitToTweakBit> setOfVisits;
     boolean wasDownload;
+    double revenue;
 
-    public AUID(String auid) {
+    public AUID(String auid, double revenue) {
         this.auid = auid;
         this.setOfVisits = new TreeSet<>();
+        this.revenue = revenue;
+    }
+
+    public double getRevenue() {
+        return revenue;
+    }
+
+    public void setRevenue(double revenue) {
+        this.revenue = revenue;
     }
 
     public String getAuid() {

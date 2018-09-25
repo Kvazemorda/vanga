@@ -9,7 +9,10 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Main {
     static StringBuilder toFile = new StringBuilder();
@@ -22,7 +25,7 @@ public class Main {
     static DataParser dataParser;
     public static TreeMap<String, AUID> auids;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         downloaded = 0;
         goAway = 0;
         auids = new TreeMap<>();
@@ -33,31 +36,19 @@ public class Main {
         File file = null;
         String line = null;
         testData = "C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\java\\com\\tweakbit\\driverupdater\\trainmodel\\test1.csv";
-        try {
+         try {
             ArrayList<String> days = new ArrayList<>();
-            days.add("2018-07-30.txt");
-            days.add("2018-07-31.txt");
-            days.add("2018-08-01.txt");
-            days.add("2018-08-02.txt");
-            days.add("2018-08-04.txt");
-            days.add("2018-08-05.txt");
-            days.add("2018-08-06.txt");
-            days.add("2018-08-07.txt");
-            days.add("2018-08-08.txt");
-            days.add("2018-08-09.txt");
-            days.add("2018-08-10.txt");
-            days.add("2018-08-11.txt");
-            days.add("2018-08-13.txt");
-            days.add("2018-08-14.txt");
-            days.add("2018-08-15.txt");
-            days.add("2018-08-16.txt");
-            days.add("2018-08-17.txt");
-            days.add("2018-08-18.txt");
-            days.add("2018-08-19.txt");
-            days.add("2018-08-20.txt");
-            days.add("2018-08-21.txt");
-            days.add("2018-08-22.txt");
-            days.add("2018-08-23.txt");
+            // days.add("2018-09-12.txt");
+           //  days.add("2018-09-13.txt");
+          //   days.add("2018-09-14.txt");
+         //    days.add("2018-09-15.txt");
+           //  days.add("2018-09-16.txt");
+             days.add("2018-09-17.txt");
+             days.add("2018-09-19.txt");
+             days.add("2018-09-20.txt");
+             days.add("2018-09-21.txt");
+             days.add("2018-09-22.txt");
+             days.add("2018-09-23.txt");
 
             for(int i = 0; i < days.size(); i++) {
                 if(args.length > 0 ){
@@ -104,9 +95,10 @@ public class Main {
 
         try {
             // Если подготавливаем параметры к обучению, то в файл будет сохраняться значения 1,3,1,4,2.. итд
-            // Если подготавилваем параметры к тестирования, то в файл будет сохраняться параметр запроса
+            // Если подготавилваем параметры к тестирования, то в файл будет сохраняться параметры http запроса
                 PrintWriter pwTestData = new PrintWriter(new File(testData));
-                PrintWriter pwForRequest = new PrintWriter(new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\test1.csv"));
+                //PrintWriter pwForRequest = new PrintWriter(new File("C:\\Users\\ilyav\\IdeaProjects\\vanga\\src\\main\\resources\\test1.csv"));
+                StringBuilder fileForPurchase = new StringBuilder();
                 int countRow = 0;
                 for(Map.Entry<String,AUID> map: auids.entrySet()){
                     AUID auid = map.getValue();
@@ -121,12 +113,14 @@ public class Main {
                     for(VisitToTweakBit app: auid.getSetOfVisits()){
                         app.setSessionCount(String.valueOf(session));
                         app.setDownload(auid.isWasDownload());
+                        app.setRevenue(auid.getRevenue());
                         if(!dataParser.isSaveDataForQuery()){
-                            dataParser.saveToFile(app, ",", true, dataParser.isSaveDataForQuery());
-                            dataParser.saveToFile(previsousVisit, "\n", false, dataParser.isSaveDataForQuery());
+                              dataParser.saveToFile(app, "\n", true, dataParser.isSaveDataForQuery());
+                         //   dataParser.saveToFile(previsousVisit, "\n", false, dataParser.isSaveDataForQuery());
+                         //   dataParser.savePurchaseToFile(app, "\n", true, dataParser.isSaveDataForQuery(), fileForPurchase);
                         }else {
-                            dataParser.saveToFile(app, ",", true, dataParser.isSaveDataForQuery());
-                            dataParser.saveToFile(previsousVisit, "\n", false, dataParser.isSaveDataForQuery());
+                            dataParser.saveToFile(app, "\n", true, dataParser.isSaveDataForQuery());
+                          //  dataParser.saveToFile(previsousVisit, "\n", false, dataParser.isSaveDataForQuery());
                         }
                         previsousVisit = app;
                         countRow++;
@@ -153,13 +147,11 @@ public class Main {
                     MLPClassifierLeaner mlp = new MLPClassifierLeaner(locationToSave, scaleCof);
                     mlp.toTrainMachine(countRow, numImputs, 2, testData);
                 }else {
-                    pwForRequest.write(toFile.toString());
-                    pwForRequest.close();
+                    //pwForRequest.write(toFile.toString());
+                //    pwForRequest.close();
                 }
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
@@ -171,7 +163,7 @@ public class Main {
         if(auids.containsKey(s)){
             return auids.get(s);
         }else {
-            auids.put(s, new AUID(s));
+            auids.put(s, new AUID(s, 0.0));
             return getAUIDFromMap(s);
         }
     }
@@ -187,18 +179,22 @@ public class Main {
                 VisitToTweakBit visit = new VisitToTweakBit();
                 // сохраняю кол-во сессий
                 visit.setSessionCount(String.valueOf(sessionCount));
-                // сохраняю дату визита из имени файла с данными
                 visit.setDateOfVizit(date);
-
+                visit.setSessionTime(Integer.valueOf(keyStr));
                 dataParser.parsingOfSession((JSONObject) keyValue, visit, date, sessionCount);
                 if(visit.getVisitHourOfDay() != null
                         && visit.getProductName() != null
-                        && visit.getProductName().equals("du")) {
+                        /*&& visit.getProductName().equals("du")*/) {
+
                     //находим существущий auid или создаем новый
                     AUID auid = getAUIDFromMap(auidText);
                     if(visit.isDownload()){
                         auid.setWasDownload(visit.isDownload());
                     }
+                    if(visit.getRevenue() > 0){
+                        auid.setRevenue(visit.getRevenue());
+                    }
+
                     visit.setAuid(auidText);
                     auid.getSetOfVisits().add(visit);
                 }

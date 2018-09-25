@@ -22,6 +22,7 @@ import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.dataset.api.preprocessor.serializer.NormalizerSerializer;
 import org.nd4j.linalg.learning.config.Nesterovs;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import scala.util.Random;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,10 +39,10 @@ public class MLPClassifierLeaner {
 
     public void toTrainMachine(int batchSize, int numInputs, int numOutputs, String dataForTrain)
             throws IOException, InterruptedException {
-
-        int seed = 123;
+        Random rand = new Random();
+        int  seed = rand.nextInt(123);
         double learningRate = 0.1;
-        int nEpochs = 1000 ;
+        int nEpochs = 500 ;
         int numHiddenNodes = 15;
 
 
@@ -51,7 +52,7 @@ public class MLPClassifierLeaner {
         DataSet allData = trainIter.next();
         allData.shuffle();
 
-        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.5);
+        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.7);
 
         DataSet trainingData = testAndTrain.getTrain();
         DataSet testData = testAndTrain.getTest();

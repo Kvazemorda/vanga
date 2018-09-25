@@ -53,8 +53,7 @@ public class PredictModelBean {
             // load toTrainMachine model
             InputStream modelIS = context.getResourceAsStream("/" + File.separator + "WEB-INF"
                             + File.separator + "classes" + File.separator + "train_model_for_du.zip");
-            MultiLayerNetwork model = ModelSerializer
-                    .restoreMultiLayerNetwork(modelIS);
+            MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(modelIS);
             modelIS.close();
             model.init();
             INDArray predict = model.output(allData.getFeatureMatrix(), false);

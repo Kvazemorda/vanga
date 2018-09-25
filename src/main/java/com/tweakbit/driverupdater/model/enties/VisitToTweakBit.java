@@ -6,6 +6,7 @@ import java.util.Date;
 
 public class VisitToTweakBit implements Comparable {
     private boolean download;
+    private boolean visitToCart;
     private String keyError;
     private String downloadHourOfDay;
     private String visitHourOfDay;
@@ -30,9 +31,89 @@ public class VisitToTweakBit implements Comparable {
     private String contentFromGetOfUrl;
     private String clkid;
     private String clientId;
-    private Date dateOfVizit;
-    private int weekVisit;
+    private Date dateOfVizit, dateOfViziteToCart;
+    private int weekVisit, sessionTime;
     private String AUIDFromateTime;
+    private String cartVisitHourOfDay;
+    private long timeForPurchase;
+    private  String country;
+    private String city;
+    private String subdivision;
+    private String zip;
+    private String timeZone;
+    private String localLang;
+    private double loadSite;
+
+    public String getLocalLang() {
+        return localLang;
+    }
+
+    public void setLocalLang(String localLang) {
+        this.localLang = localLang;
+    }
+
+    public double getLoadSite() {
+        return loadSite;
+    }
+
+    public void setLoadSite(double loadSite) {
+        this.loadSite = loadSite;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getSubdivision() {
+        return subdivision;
+    }
+
+    public void setSubdivision(String subdivision) {
+        this.subdivision = subdivision;
+    }
+
+    public String getZip() {
+        return zip;
+    }
+
+    public void setZip(String zip) {
+        this.zip = zip;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
+    public String getCartVisitHourOfDay() {
+        return cartVisitHourOfDay;
+    }
+
+    public String getBeltCartVisit() {
+        return beltCartVisit;
+    }
+
+    public String getBeltTimeCartVisit() {
+        return beltTimeCartVisit;
+    }
+
+    private String beltCartVisit;
+    private String beltTimeCartVisit;
 
     public String getAUIDFromateTime() {
         return AUIDFromateTime;
@@ -281,7 +362,7 @@ public class VisitToTweakBit implements Comparable {
     public int compareTo(@NotNull Object o) {
         VisitToTweakBit visitToTweakBit = (VisitToTweakBit) o;
 
-        if(this.getDateOfVizit().before(visitToTweakBit.getDateOfVizit())){
+        if(this.getSessionTime() > visitToTweakBit.getSessionTime()){
             return 1;
         }else {
             return 0;
@@ -290,5 +371,49 @@ public class VisitToTweakBit implements Comparable {
 
     public void setAUIDFromateTime(String AUIDFromateTime) {
         this.AUIDFromateTime = AUIDFromateTime;
+    }
+
+    public void setCartVisitHourOfDay(String cartVisitHourOfDay) {
+        this.cartVisitHourOfDay = cartVisitHourOfDay;
+    }
+
+    public void setBeltCartVisit(String beltCartVisit) {
+        this.beltCartVisit = beltCartVisit;
+    }
+
+    public void setBeltTimeCartVisit(String beltTimeCartVisit) {
+        this.beltTimeCartVisit = beltTimeCartVisit;
+    }
+
+    public void setVisitToCart(boolean visitToCart) {
+        this.visitToCart = visitToCart;
+    }
+
+    public boolean isVisitToCart() {
+        return visitToCart;
+    }
+
+    public void setTimeForPurchase(long timeForPurchase) {
+        this.timeForPurchase = timeForPurchase;
+    }
+
+    public long getTimeForPurchase() {
+        return timeForPurchase;
+    }
+
+    public void setDateOfViziteToCart(Date dateOfViziteToCart) {
+        this.dateOfViziteToCart = dateOfViziteToCart;
+    }
+
+    public Date getDateOfViziteToCart() {
+        return dateOfViziteToCart;
+    }
+
+    public int getSessionTime() {
+        return sessionTime;
+    }
+
+    public void setSessionTime(int sessionTime) {
+        this.sessionTime = sessionTime;
     }
 }
