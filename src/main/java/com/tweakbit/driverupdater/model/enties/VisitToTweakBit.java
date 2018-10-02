@@ -1,6 +1,6 @@
 package com.tweakbit.driverupdater.model.enties;
 
-import org.jetbrains.annotations.NotNull;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 
@@ -10,17 +10,19 @@ public class VisitToTweakBit implements Comparable {
     private String keyError;
     private String downloadHourOfDay;
     private String visitHourOfDay;
-    private String productName;
+    @JsonProperty("product") private String productName;
     private String auid;
     private String url;
     private String lang;
-    private String os;
-    private String browser;
+    @JsonProperty private String os;
+    @JsonProperty private String browser;
     private String gclid;
     private String beltTime;
     private String marker;
     private String belt;
-    private String sessionCount;
+    @JsonProperty("session") private String sessionCount;
+    @JsonProperty("screenSize") private String screenSize;
+    @JsonProperty private String time;
     private String size;
     private String sizeHigh;
     private int purchase;
@@ -36,12 +38,13 @@ public class VisitToTweakBit implements Comparable {
     private String AUIDFromateTime;
     private String cartVisitHourOfDay;
     private long timeForPurchase;
-    private  String country;
-    private String city;
-    private String subdivision;
-    private String zip;
-    private String timeZone;
-    private String localLang;
+    @JsonProperty private  String country;
+    @JsonProperty private String city;
+    @JsonProperty private String subdivision;
+    @JsonProperty private String zip;
+    @JsonProperty("time_zone") private String timeZone;
+    @JsonProperty private String code;
+    @JsonProperty private String localLang;
     private double loadSite;
 
     public String getLocalLang() {
@@ -344,31 +347,6 @@ public class VisitToTweakBit implements Comparable {
         this.beltTime = beltTime;
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("VisitToTweakBit{");
-        sb.append(", auid='").append(auid).append('\'');
-        sb.append(", productName='").append(productName).append('\'');
-        sb.append(", downloadHourOfDay=").append(downloadHourOfDay);
-        sb.append("download=").append(download);
-        sb.append(", visitHourOfDay=").append(visitHourOfDay);
-        sb.append(", keyError='").append(keyError).append('\'');
-        sb.append(", url='").append(url).append('\'');
-        sb.append('}');
-        return sb.toString();
-    }
-
-    @Override
-    public int compareTo(@NotNull Object o) {
-        VisitToTweakBit visitToTweakBit = (VisitToTweakBit) o;
-
-        if(this.getSessionTime() > visitToTweakBit.getSessionTime()){
-            return 1;
-        }else {
-            return 0;
-        }
-    }
-
     public void setAUIDFromateTime(String AUIDFromateTime) {
         this.AUIDFromateTime = AUIDFromateTime;
     }
@@ -415,5 +393,54 @@ public class VisitToTweakBit implements Comparable {
 
     public void setSessionTime(int sessionTime) {
         this.sessionTime = sessionTime;
+    }
+
+    public String getScreenSize() {
+        return screenSize;
+    }
+
+    public void setScreenSize(String screenSize) {
+        this.screenSize = screenSize;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("VisitToTweakBit{");
+        sb.append(", auid='").append(auid).append('\'');
+        sb.append(", productName='").append(productName).append('\'');
+        sb.append(", downloadHourOfDay=").append(downloadHourOfDay);
+        sb.append("download=").append(download);
+        sb.append(", visitHourOfDay=").append(visitHourOfDay);
+        sb.append(", keyError='").append(keyError).append('\'');
+        sb.append(", url='").append(url).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        VisitToTweakBit visitToTweakBit = (VisitToTweakBit) o;
+
+        if(this.getSessionTime() > visitToTweakBit.getSessionTime()){
+            return 1;
+        }else {
+            return 0;
+        }
     }
 }

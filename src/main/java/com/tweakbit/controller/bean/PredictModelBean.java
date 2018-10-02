@@ -36,7 +36,6 @@ public class PredictModelBean {
 
     public double main(int batchSize, int numInputs, int numOutputs, String dataForTrain, ServletContext context){
         try {
-            System.out.println("----------------------------- " + dataForTrain);
             RecordReader rr = new CSVRecordReader();
             rr.initialize(new StringSplit(dataForTrain));
             DataSetIterator trainIter = new RecordReaderDataSetIterator(rr, batchSize, 0, numOutputs);
@@ -57,7 +56,6 @@ public class PredictModelBean {
             modelIS.close();
             model.init();
             INDArray predict = model.output(allData.getFeatureMatrix(), false);
-            System.out.println(predict);
             return  predict.getFloat(0,1);
         } catch (Exception ex) {
             ex.printStackTrace();

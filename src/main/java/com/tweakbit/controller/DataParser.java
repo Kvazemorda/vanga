@@ -1,11 +1,13 @@
 package com.tweakbit.controller;
 
 import com.CalcOfMoon;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweakbit.driverupdater.model.enties.VisitToTweakBit;
 import com.tweakbit.model.Params;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.crypto.Data;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -25,6 +27,7 @@ public class DataParser {
     VisitToTweakBit visitToDU;
     File fileForQuery;
     Boolean safeDataForQuery;
+    static public Integer countDownloaded = 0;
 
     public DataParser() {
     }
@@ -46,9 +49,9 @@ public class DataParser {
         this.safeDataForQuery = false;
         saveDataToAppFromHttp(this.visitToDU, req);
 
-        VisitToTweakBit previousVisit = getPreviousVisit(this.visitToDU.getSessionCount(), req);
-        saveToFile(visitToDU, ",", true, false);
-        saveToFile(previousVisit, "\n", false, false);
+       // VisitToTweakBit previousVisit = getPreviousVisit(this.visitToDU.getSessionCount(), req);
+        saveToFile(visitToDU, "\n", true, false);
+     //   saveToFile(previousVisit, "\n", false, false);
     }
 
     public SaveToString getSaveToString() {
@@ -59,11 +62,15 @@ public class DataParser {
         return toFile;
     }
 
-    private void saveDataToAppFromHttp(VisitToTweakBit app, HttpServletRequest req) {
-        app.setProductName("du");
+    private void saveDataToAppFromHttp(VisitToTweakBit app, HttpServletRequest req) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonInString = req.getParameter("data");
+
+//JSON from String to Object
+        VisitToTweakBit visitToTweakBit = mapper.readValue(jsonInString, VisitToTweakBit.class);
+        app.setProductName(req.getParameter("product"));
        //язык для DU. для wikifixes язык сохрянть из url
         app.setLang(req.getParameter("lang"));
-        app.setLocalLang(req.getParameter(""));
         app.setSessionCount(req.getParameter("sessions"));
         //здесь сохраняется время визита в секундах, часовой пояс, название пояса и дата
         getTimeAndTimeZoneFromData(req.getParameter("time"), app, false);
@@ -75,6 +82,7 @@ public class DataParser {
         app.setMarker(req.getParameter("marker"));
         app.setKwFromGetOfUrl(req.getParameter("kw"));
         app.setContentFromGetOfUrl(req.getParameter("content"));
+        app.setLocalLang("localLang");
         setWeekFromDateToApp(app, app.getDateOfVizit());
         app.setDownload(false);
     }
@@ -127,8 +135,7 @@ public class DataParser {
         return splitLine.length;
     }
 
-    public void parsingOfSession(JSONObject jsonObject, VisitToTweakBit app, Date date, int sessionCount) {
-        setWeekFromDateToApp(app, date);
+    public void parsingOfSession(JSONObject jsonObject, VisitToTweakBit app, int sessionCount){
         for (Object key : jsonObject.keySet()) {
             String keyStr = (String) key;
             Object keyValue = jsonObject.get(keyStr);
@@ -138,17 +145,24 @@ public class DataParser {
                 getProduct(value, app);
                 // сохраняю имя ошибки из wikifixes из рекламы
                 app.setKeyError(getParamFromWiki(value));
-                app.setUrl(value);
+                //app.setUrl(value);
                 setGetToAppFromData(app, keyValue.toString());
-                if (keyValue.toString().contains("/afterinstallb/") || keyValue.toString().contains("/download/")) {
+                if (keyValue.toString().contains("/afterinstall/") || keyValue.toString().contains("/download/")) {
                     app.setDownload(true);
+                    countDownloaded++;
                 }
             }
 
             if (keyStr.equals("lang")) {
                 app.setLang(keyValue.toString());
             }
-
+            if (keyStr.equals("downloadTime")){
+                if(app.isDownload()){
+                    app.setDownload(true);
+                }else {
+                    countDownloaded++;
+                }
+            }
 
             if (keyStr.equals("time")) {
                 getTimeAndTimeZoneFromData(keyValue.toString(), app, false);
@@ -185,7 +199,8 @@ public class DataParser {
             }
 
             if(keyStr.equals("geo")){
-                if(keyValue.toString() != "true" && keyValue.toString() != "null" && !keyValue.toString().contains("not connected") ){
+                if(keyValue.toString() != "true" && keyValue.toString() != "null"
+                        && !keyValue.toString().contains("not connected") ){
                         parsingOfPurchase((JSONObject) keyValue, app);
                 }
             }
@@ -259,7 +274,7 @@ public class DataParser {
     }
 
     private void setTimeAndTimeZoneToApp(VisitToTweakBit prk, String[] timeVizit, boolean cartVizit) {
-        if(timeVizit !=null && !cartVizit){
+        if(timeVizit != null && !cartVizit){
             prk.setVisitHourOfDay(timeVizit[2]);
             prk.setBeltTime(timeVizit[1]);
             prk.setBelt(timeVizit[0]);
@@ -436,26 +451,27 @@ public class DataParser {
         String wikiErrorsB0x = "errors/b/0x";
 
         if(value.contains(driverUpdater)){
-            visitToTweakBit.setProductName("du");
+            visitToTweakBit.setProductName("driver-updater");
+
         }
         if(value.contains(prk)){
-            visitToTweakBit.setProductName("prk");
+            visitToTweakBit.setProductName("pc-repair-kit");
         }
         if(value.contains(pcsup)){
-            visitToTweakBit.setProductName("pcsup");
+            visitToTweakBit.setProductName("pc-speed-up");
         }
         if(value.contains(am)){
-            visitToTweakBit.setProductName("am");
+            visitToTweakBit.setProductName("anti-malware");
         }
         if(value.contains(wikiErLand)) {
-            visitToTweakBit.setProductName("prk-wiki");
+            visitToTweakBit.setProductName("pc-repair-kit");
         }
         if(value.contains(pcr)){
-            visitToTweakBit.setProductName("pcr");
+            visitToTweakBit.setProductName("pc-repair");
         }
         if(value.contains(wikiNoErLand) || value.contains(wikiErrorsExe)
                 || value.contains(wikiErrorsBDll) || value.contains(wikiErrorsB0x))
-            visitToTweakBit.setProductName("prk-wiki");
+            visitToTweakBit.setProductName("pc-repair-kit");
     }
 
     public String getParamFromWiki(String url){
@@ -481,80 +497,78 @@ public class DataParser {
 
     public void saveToFile(VisitToTweakBit app, String separator, boolean needAddScoreToFile, boolean forTestQuery){
         Integer download = 0;
-        if(app.getProductName().equals("du")) {
-            if (needAddScoreToFile) {
-                if (app.isDownload() &&
-                        (app.getOs().contains("Windows")
-                                || app.getOs().contains("Unknown Unknown")
-                                || app.getOs().contains("undefined undefined"))) {
-                    toFile.append(1);
-                    download = 1;
-                } else toFile.append(0);
-                toFile.append(",");
-                //дистанция до луны
-                //    toFile.append(saveToString.safeOwnData(calcOfMoon.distanceOfMoon(app.getDateOfVizit())));
-            }
-            if (!forTestQuery) {
-                toFile.append(saveToString.safeToString(app.getProductName(), Params.PRODUCT));
-                //сохраняем os
-                toFile.append(saveToString.safeToString(app.getOs(), Params.OS));
-                //сохраняем пояс часовой
-                toFile.append(saveToString.safeToString(app.getBelt(), Params.BELT));
-                toFile.append(saveToString.safeToString(app.getBeltTime(), Params.TIMEBELT));
-                toFile.append(saveToString.safeToString(app.getLang(), Params.LANG));
-                toFile.append(saveToString.safeToString(app.getSessionCount(), Params.SESSIONS));
-                toFile.append(saveToString.safeToString(app.getKwFromGetOfUrl(), Params.KW));
-                toFile.append(saveToString.safeToString(app.getSize(), Params.SIZE));
-                //toFile.append(saveToString.safeToString(app.getSizeHigh(), Params.SIZEHIGH));
-                //сохраняем дни недели
-                //toFile.append(saveToString.safeToString(String.valueOf(visitToDU.getWeekVisit()), Params.WEEK));
-                //сохраняем время визита "hours"
-                if (app.getVisitHourOfDay() != null) {
-                    toFile.append(saveToString.safeOwnData(Double.valueOf(app.getVisitHourOfDay())));
-                } else {
-                    toFile.append(saveToString.safeOwnData(-1.0));
-                }
-                toFile.append(saveToString.safeToString(app.getContentFromGetOfUrl(), Params.CONTENT));
-                //toFile.append(saveToString.safeToString(visitToDU.getClkid(), Params.CLIKID));
-                toFile.append(saveToString.safeToString(app.getMarker(), Params.MARKERS));
-                //сохраняем браузеры
-                toFile.append(saveToString.safeToString(app.getCountry(), Params.COUNTRY));
-                //  toFile.append(saveToString.safeToString(app.getCity(), Params.CITY));
-                // toFile.append(saveToString.safeToString(app.getSubdivision(), Params.SUBDIVISION));
-                //  toFile.append(saveToString.safeToString(app.getZip(), Params.ZIP));
-                //  toFile.append(saveToString.safeToString(app.getTimeZone(), Params.TIMEZONE));
-                toFile.append(saveToString.safeToString(app.getLocalLang(), Params.LOCALLANG));
-                toFile.append(saveToString.safeOwnData(app.getLoadSite()));
-                toFile.append(saveToString.safeToString(app.getBrowser(), Params.BROWSER));
-                toFile.append(separator);
+        if (needAddScoreToFile) {
+            if (app.isDownload() &&
+                    (app.getOs().contains("Windows")
+                            || app.getOs().contains("Unknown Unknown")
+                            || app.getOs().contains("undefined undefined"))) {
+                toFile.append(1);
+                download = 1;
+            } else toFile.append(0);
+            toFile.append(",");
+            //дистанция до луны
+            //    toFile.append(saveToString.safeOwnData(calcOfMoon.distanceOfMoon(app.getDateOfVizit())));
+        }
+        if (!forTestQuery) {
+            toFile.append(saveToString.safeToString(app.getProductName(), Params.PRODUCT));
+            //сохраняем os
+            toFile.append(saveToString.safeToString(app.getOs(), Params.OS));
+            //сохраняем пояс часовой
+            toFile.append(saveToString.safeToString(app.getBelt(), Params.BELT));
+            toFile.append(saveToString.safeToString(app.getBeltTime(), Params.TIMEBELT));
+            toFile.append(saveToString.safeToString(app.getLang(), Params.LANG));
+            toFile.append(saveToString.safeToString(app.getSessionCount(), Params.SESSIONS));
+            toFile.append(saveToString.safeToString(app.getKwFromGetOfUrl(), Params.KW));
+            toFile.append(saveToString.safeToString(app.getSize(), Params.SIZE));
+            toFile.append(saveToString.safeToString(app.getSizeHigh(), Params.SIZEHIGH));
+            //сохраняем дни недели
+            //toFile.append(saveToString.safeToString(String.valueOf(visitToDU.getWeekVisit()), Params.WEEK));
+            //сохраняем время визита "hours"
+            if (app.getVisitHourOfDay() != null) {
+                toFile.append(saveToString.safeOwnData(Double.valueOf(app.getVisitHourOfDay())));
             } else {
-                if (separator.equals(",")) {
-                    //язык для DU. для wikifixes язык сохрянть из url
-                    toFile.append("&").append("lang=").append(app.getLang());
-                    toFile.append("&").append("sessions=").append(app.getSessionCount());
-                    //здесь сохраняется время визита в секундах, часовой пояс, название пояса и дата
-                    toFile.append("&").append("time=").append(app.getAUIDFromateTime());
-                    toFile.append("&").append("os=").append(app.getOs());
-                    toFile.append("&").append("browser=").append(app.getBrowser());
-                    toFile.append("&").append("screenSize=").append(app.getSize()).append("x").append(app.getSizeHigh());
-                    toFile.append("&").append("marker=").append(app.getMarker());
-                    toFile.append("&").append("kw=").append(app.getKwFromGetOfUrl());
-                    toFile.append("&").append("content=").append(app.getContentFromGetOfUrl());
-                    toFile.append("&");
-                } else {
-                    //язык для DU. для wikifixes язык сохрянть из url
-                    toFile.append("&").append("pr_lang=").append(app.getLang());
-                    toFile.append("&").append("pr_sessions=").append(app.getSessionCount());
-                    //здесь сохраняется время визита в секундах, часовой пояс, название пояса и дата
-                    toFile.append("&").append("pr_time=").append(app.getAUIDFromateTime());
-                    toFile.append("&").append("pr_os=").append(app.getOs());
-                    toFile.append("&").append("pr_browser=").append(app.getBrowser());
-                    toFile.append("&").append("pr_screenSize=").append(app.getSize()).append("x").append(app.getSizeHigh());
-                    toFile.append("&").append("pr_marker=").append(app.getMarker());
-                    toFile.append("&").append("pr_kw=").append(app.getKwFromGetOfUrl());
-                    toFile.append("&").append("pr_content=").append(app.getContentFromGetOfUrl());
-                    toFile.append(separator);
-                }
+                toFile.append(saveToString.safeOwnData(-1.0));
+            }
+            toFile.append(saveToString.safeToString(app.getContentFromGetOfUrl(), Params.CONTENT));
+            //toFile.append(saveToString.safeToString(visitToDU.getClkid(), Params.CLIKID));
+            toFile.append(saveToString.safeToString(app.getMarker(), Params.MARKERS));
+            //сохраняем браузеры
+            toFile.append(saveToString.safeToString(app.getCountry(), Params.COUNTRY));
+              toFile.append(saveToString.safeToString(app.getCity(), Params.CITY));
+            // toFile.append(saveToString.safeToString(app.getSubdivision(), Params.SUBDIVISION));
+             // toFile.append(saveToString.safeToString(app.getZip(), Params.ZIP));
+              toFile.append(saveToString.safeToString(app.getTimeZone(), Params.TIMEZONE));
+            toFile.append(saveToString.safeToString(app.getLocalLang(), Params.LOCALLANG));
+            toFile.append(saveToString.safeOwnData(app.getLoadSite()));
+            toFile.append(saveToString.safeToString(app.getBrowser(), Params.BROWSER));
+            toFile.append(separator);
+        } else {
+            if (separator.equals(",")) {
+                //язык для DU. для wikifixes язык сохрянть из url
+                toFile.append("&").append("lang=").append(app.getLang());
+                toFile.append("&").append("sessions=").append(app.getSessionCount());
+                //здесь сохраняется время визита в секундах, часовой пояс, название пояса и дата
+                toFile.append("&").append("time=").append(app.getAUIDFromateTime());
+                toFile.append("&").append("os=").append(app.getOs());
+                toFile.append("&").append("browser=").append(app.getBrowser());
+                toFile.append("&").append("screenSize=").append(app.getSize()).append("x").append(app.getSizeHigh());
+                toFile.append("&").append("marker=").append(app.getMarker());
+                toFile.append("&").append("kw=").append(app.getKwFromGetOfUrl());
+                toFile.append("&").append("content=").append(app.getContentFromGetOfUrl());
+                toFile.append("&");
+            } else {
+                //язык для DU. для wikifixes язык сохрянть из url
+                toFile.append("&").append("pr_lang=").append(app.getLang());
+                toFile.append("&").append("pr_sessions=").append(app.getSessionCount());
+                //здесь сохраняется время визита в секундах, часовой пояс, название пояса и дата
+                toFile.append("&").append("pr_time=").append(app.getAUIDFromateTime());
+                toFile.append("&").append("pr_os=").append(app.getOs());
+                toFile.append("&").append("pr_browser=").append(app.getBrowser());
+                toFile.append("&").append("pr_screenSize=").append(app.getSize()).append("x").append(app.getSizeHigh());
+                toFile.append("&").append("pr_marker=").append(app.getMarker());
+                toFile.append("&").append("pr_kw=").append(app.getKwFromGetOfUrl());
+                toFile.append("&").append("pr_content=").append(app.getContentFromGetOfUrl());
+                toFile.append(separator);
             }
         }
     }
@@ -573,9 +587,6 @@ public class DataParser {
             toFile.append(saveToString.safeToString(app.getBrowser(), Params.BROWSER));
             toFile.append(separator);
         }
-
-
-
     }
 
 

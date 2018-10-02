@@ -34,16 +34,14 @@ public class MLPClassifierLeaner {
         this.locationToSave = locationToSave;
         this.scaleCof = scaleCof;
     }
-
-
-
+    
     public void toTrainMachine(int batchSize, int numInputs, int numOutputs, String dataForTrain)
             throws IOException, InterruptedException {
         Random rand = new Random();
         int  seed = rand.nextInt(123);
         double learningRate = 0.1;
-        int nEpochs = 500 ;
-        int numHiddenNodes = 15;
+        int nEpochs = 1000 ;
+        int numHiddenNodes = 20;
 
 
         RecordReader rr = new CSVRecordReader();

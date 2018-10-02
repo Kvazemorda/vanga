@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-@WebServlet("/get_predict_for_du")
+@WebServlet("/get_predict")
 public class QueryGetterServlet extends HttpServlet {
 
     @EJB PrepareParamsForPredict initParamsForPredictBean;
@@ -23,31 +23,27 @@ public class QueryGetterServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        makeRequest(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        makeRequest(req, resp);
+    }
+
+    private void makeRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         PrintWriter out = resp.getWriter();
-        try{
+        try {
             ServletContext context = getServletContext();
             double anwser = learnedModel.predict(initParamsForPredictBean.safeParamsFromLandToMap(req, context), context);
+            resp.setHeader("Access-Control-Allow-Origin", "*");
+            resp.setHeader("Content-Type", "text/plain");
             resp.setStatus(200);
             out.append(String.valueOf(anwser));
-        }catch (NullPointerException e){
+        } catch (NullPointerException e) {
             e.printStackTrace();
             resp.setStatus(400);
             out.append("Error");
         }
-
     }
-
-    @Override
-    protected void doOptions(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        setAccessControlHeaders(resp);
-        resp.setStatus(HttpServletResponse.SC_OK);
-    }
-
-    private void setAccessControlHeaders(HttpServletResponse resp) {
-        resp.setHeader("Access-Control-Allow-Origin", "*");
-        resp.setHeader("Access-Control-Allow-Methods", "GET");
-    }
-
-
 }
