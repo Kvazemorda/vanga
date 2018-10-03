@@ -1,23 +1,18 @@
 package com.tweakbit.controller;
 
 import com.CalcOfMoon;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tweakbit.driverupdater.model.enties.VisitToTweakBit;
 import com.tweakbit.model.Params;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.crypto.Data;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Scanner;
-import java.util.TreeMap;
+import java.util.*;
 
 public class DataParser {
     StringBuilder toFile;
@@ -28,6 +23,7 @@ public class DataParser {
     File fileForQuery;
     Boolean safeDataForQuery;
     static public Integer countDownloaded = 0;
+    protected static final String CHARSET_FOR_URL_ENCODING = "UTF-8";
 
     public DataParser() {
     }
@@ -39,19 +35,15 @@ public class DataParser {
         this.safeDataForQuery = false;
     }
 
-    public DataParser(StringBuilder toFile, VisitToTweakBit visitToDU, TreeMap<Params,
-            TreeMap<String, Integer>> labelsOfTree, HttpServletRequest req) {
+    public DataParser(StringBuilder toFile, TreeMap<Params,
+            TreeMap<String, Integer>> labelsOfTree, HttpServletRequest req) throws IOException {
         this.toFile = toFile;
         this.labelsOfTree = labelsOfTree;
-        this.visitToDU = visitToDU;
         this.saveToString = new SaveToString(labelsOfTree);
         this.calcOfMoon = new CalcOfMoon();
         this.safeDataForQuery = false;
-        saveDataToAppFromHttp(this.visitToDU, req);
-
-       // VisitToTweakBit previousVisit = getPreviousVisit(this.visitToDU.getSessionCount(), req);
+        this.visitToDU = saveDataToAppFromHttp(req);
         saveToFile(visitToDU, "\n", true, false);
-     //   saveToFile(previousVisit, "\n", false, false);
     }
 
     public SaveToString getSaveToString() {
@@ -62,54 +54,33 @@ public class DataParser {
         return toFile;
     }
 
-    private void saveDataToAppFromHttp(VisitToTweakBit app, HttpServletRequest req) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonInString = req.getParameter("data");
+    private VisitToTweakBit saveDataToAppFromHttp(HttpServletRequest req){
+        VisitToTweakBit app = new VisitToTweakBit();
+        String jsonInString = null;
+        try {
+            jsonInString = req.getParameter("data");
+            byte[] decodedBytes = Base64.getDecoder().decode(jsonInString);
+            jsonInString = new String(decodedBytes);
+            ObjectMapper mapper = new ObjectMapper();
+            app = mapper.readValue(jsonInString, VisitToTweakBit.class);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (JsonParseException e) {
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-//JSON from String to Object
-        VisitToTweakBit visitToTweakBit = mapper.readValue(jsonInString, VisitToTweakBit.class);
-        app.setProductName(req.getParameter("product"));
-       //язык для DU. для wikifixes язык сохрянть из url
-        app.setLang(req.getParameter("lang"));
-        app.setSessionCount(req.getParameter("sessions"));
         //здесь сохраняется время визита в секундах, часовой пояс, название пояса и дата
-        getTimeAndTimeZoneFromData(req.getParameter("time"), app, false);
-        app.setOs(req.getParameter("os"));
-        app.setClkid(req.getParameter("clkid"));
-        app.setBrowser(getBrowserFromData(req.getParameter("browser")));
-        app.setSize(getScreenWide(req.getParameter("screenSize")));
-        app.setSizeHigh(getScreenHigh(req.getParameter("screenSize")));
-        app.setMarker(req.getParameter("marker"));
-        app.setKwFromGetOfUrl(req.getParameter("kw"));
-        app.setContentFromGetOfUrl(req.getParameter("content"));
-        app.setLocalLang("localLang");
+        getTimeAndTimeZoneFromData(app.getTime(), app, false);
+        app.setSize(getScreenWide(app.getScreenSize()));
+        app.setSizeHigh(getScreenHigh(app.getScreenSize()));
         setWeekFromDateToApp(app, app.getDateOfVizit());
         app.setDownload(false);
-    }
 
-    private VisitToTweakBit getPreviousVisit(String sessionCount, HttpServletRequest req) {
-
-        if(Integer.valueOf(sessionCount) == 1){
-            return new VisitToTweakBit();
-        }else {
-            VisitToTweakBit app = new VisitToTweakBit();
-            //язык для DU. для wikifixes язык сохрянть из url
-            app.setLang(req.getParameter("pr_lang"));
-            app.setSessionCount(req.getParameter("pr_sessions"));
-            //здесь сохраняется время визита в секундах, часовой пояс, название пояса и дата
-            getTimeAndTimeZoneFromData(req.getParameter("pr_time"), app, false);
-            app.setOs(req.getParameter("pr_os"));
-            app.setClkid(req.getParameter("pr_clkid"));
-            app.setBrowser(getBrowserFromData(req.getParameter("pr_browser")));
-            app.setSize(getScreenWide(req.getParameter("pr_screenSize")));
-            app.setSizeHigh(getScreenHigh(req.getParameter("pr_screenSize")));
-            app.setMarker(req.getParameter("pr_marker"));
-            app.setKwFromGetOfUrl(req.getParameter("pr_kw"));
-            app.setContentFromGetOfUrl(req.getParameter("pr_content"));
-            setWeekFromDateToApp(app, app.getDateOfVizit());
-            app.setDownload(false);
-            return app;
-        }
+        return app;
     }
 
     public Date getDateFromFileName(String s) {
@@ -185,8 +156,7 @@ public class DataParser {
             }
             if (keyStr.equals("marker")) {
                 try{
-                    app.setMarker(keyValue.toString()
-                            .substring(keyValue.toString().indexOf("src_"), keyValue.toString().indexOf("\\d")));
+                    app.setMarker(changeMarker(keyValue.toString()));
                 }catch(StringIndexOutOfBoundsException e){
                 }
             }
@@ -215,6 +185,11 @@ public class DataParser {
                 }
             }
         }
+    }
+
+    public static String changeMarker(String marker){
+        String changed = marker.substring(marker.indexOf("src_"), marker.indexOf("\\d"));
+        return changed;
     }
 
     private void setGetToAppFromData(VisitToTweakBit app, String keyValue) {
@@ -579,8 +554,6 @@ public class DataParser {
 
             double visitToCart = Double.valueOf(app.getCartVisitHourOfDay());
             long dayOfVisitToCart = app.getDateOfViziteToCart().getTime() + (long) visitToCart;
-
-            System.out.println(new Date(app.getTimeForPurchase()*1000).getTime() - new Date(dayOfVisitToCart).getTime());
 
             toFile.append(saveToString.safeToString(app.getOs(), Params.OS));
             toFile.append(saveToString.safeToString(app.getKwFromGetOfUrl(),Params.KW));

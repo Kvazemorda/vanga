@@ -107,7 +107,6 @@ public class SaveToString {
         if(keyForPredict == null){
             keyForPredict = "null";
         }
-
         if(keyParams.equals(Params.OS)){
            file = addParamToString(os, keyForPredict, Params.OS);
         }

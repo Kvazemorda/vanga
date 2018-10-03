@@ -1,43 +1,23 @@
 package com.tweakbit.driverupdater.model.enties;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tweakbit.controller.DataParser;
 
 import java.util.Date;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VisitToTweakBit implements Comparable {
-    private boolean download;
-    private boolean visitToCart;
-    private String keyError;
-    private String downloadHourOfDay;
-    private String visitHourOfDay;
     @JsonProperty("product") private String productName;
-    private String auid;
-    private String url;
-    private String lang;
+    @JsonProperty private String lang;
     @JsonProperty private String os;
     @JsonProperty private String browser;
-    private String gclid;
-    private String beltTime;
     private String marker;
-    private String belt;
     @JsonProperty("session") private String sessionCount;
     @JsonProperty("screenSize") private String screenSize;
     @JsonProperty private String time;
-    private String size;
-    private String sizeHigh;
-    private int purchase;
-    private double revenue;
-    private String currency;
-    private String errorsInCart;
-    private String kwFromGetOfUrl;
-    private String contentFromGetOfUrl;
-    private String clkid;
-    private String clientId;
-    private Date dateOfVizit, dateOfViziteToCart;
-    private int weekVisit, sessionTime;
-    private String AUIDFromateTime;
-    private String cartVisitHourOfDay;
-    private long timeForPurchase;
+    @JsonProperty("kw") private String kwFromGetOfUrl;
+    @JsonProperty("content") private String contentFromGetOfUrl;
     @JsonProperty private  String country;
     @JsonProperty private String city;
     @JsonProperty private String subdivision;
@@ -45,6 +25,29 @@ public class VisitToTweakBit implements Comparable {
     @JsonProperty("time_zone") private String timeZone;
     @JsonProperty private String code;
     @JsonProperty private String localLang;
+    private boolean download;
+    private boolean visitToCart;
+    private String keyError;
+    private String downloadHourOfDay;
+    private String visitHourOfDay;
+    private String auid;
+    private String url;
+    private String gclid;
+    private String beltTime;
+    private String belt;
+    private String size;
+    private String sizeHigh;
+    private int purchase;
+    private double revenue;
+    private String currency;
+    private String errorsInCart;
+    private String clkid;
+    private String clientId;
+    private Date dateOfVizit, dateOfViziteToCart;
+    private int weekVisit, sessionTime;
+    private String AUIDFromateTime;
+    private String cartVisitHourOfDay;
+    private long timeForPurchase;
     private double loadSite;
 
     public String getLocalLang() {
@@ -246,8 +249,9 @@ public class VisitToTweakBit implements Comparable {
         return marker;
     }
 
+    @JsonProperty("marker")
     public void setMarker(String marker) {
-        this.marker = marker;
+        this.marker = DataParser.changeMarker(marker);
     }
 
     public String getGclid() {
@@ -421,16 +425,53 @@ public class VisitToTweakBit implements Comparable {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("VisitToTweakBit{");
-        sb.append(", auid='").append(auid).append('\'');
-        sb.append(", productName='").append(productName).append('\'');
-        sb.append(", downloadHourOfDay=").append(downloadHourOfDay);
-        sb.append("download=").append(download);
-        sb.append(", visitHourOfDay=").append(visitHourOfDay);
-        sb.append(", keyError='").append(keyError).append('\'');
-        sb.append(", url='").append(url).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return "VisitToTweakBit{" +
+                "productName='" + productName + '\'' +
+                ", lang='" + lang + '\'' +
+                ", os='" + os + '\'' +
+                ", browser='" + browser + '\'' +
+                ", marker='" + marker + '\'' +
+                ", sessionCount='" + sessionCount + '\'' +
+                ", screenSize='" + screenSize + '\'' +
+                ", time='" + time + '\'' +
+                ", kwFromGetOfUrl='" + kwFromGetOfUrl + '\'' +
+                ", contentFromGetOfUrl='" + contentFromGetOfUrl + '\'' +
+                ", country='" + country + '\'' +
+                ", city='" + city + '\'' +
+                ", subdivision='" + subdivision + '\'' +
+                ", zip='" + zip + '\'' +
+                ", timeZone='" + timeZone + '\'' +
+                ", code='" + code + '\'' +
+                ", localLang='" + localLang + '\'' +
+                ", download=" + download +
+                ", visitToCart=" + visitToCart +
+                ", keyError='" + keyError + '\'' +
+                ", downloadHourOfDay='" + downloadHourOfDay + '\'' +
+                ", visitHourOfDay='" + visitHourOfDay + '\'' +
+                ", auid='" + auid + '\'' +
+                ", url='" + url + '\'' +
+                ", gclid='" + gclid + '\'' +
+                ", beltTime='" + beltTime + '\'' +
+                ", belt='" + belt + '\'' +
+                ", size='" + size + '\'' +
+                ", sizeHigh='" + sizeHigh + '\'' +
+                ", purchase=" + purchase +
+                ", revenue=" + revenue +
+                ", currency='" + currency + '\'' +
+                ", errorsInCart='" + errorsInCart + '\'' +
+                ", clkid='" + clkid + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", dateOfVizit=" + dateOfVizit +
+                ", dateOfViziteToCart=" + dateOfViziteToCart +
+                ", weekVisit=" + weekVisit +
+                ", sessionTime=" + sessionTime +
+                ", AUIDFromateTime='" + AUIDFromateTime + '\'' +
+                ", cartVisitHourOfDay='" + cartVisitHourOfDay + '\'' +
+                ", timeForPurchase=" + timeForPurchase +
+                ", loadSite=" + loadSite +
+                ", beltCartVisit='" + beltCartVisit + '\'' +
+                ", beltTimeCartVisit='" + beltTimeCartVisit + '\'' +
+                '}';
     }
 
     @Override

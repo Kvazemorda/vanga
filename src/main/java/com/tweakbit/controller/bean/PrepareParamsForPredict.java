@@ -1,14 +1,16 @@
 package com.tweakbit.controller.bean;
 
 import com.tweakbit.controller.DataParser;
-import com.tweakbit.driverupdater.model.enties.VisitToTweakBit;
 import com.tweakbit.model.Params;
 
 import javax.ejb.Local;
 import javax.ejb.Stateless;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.TreeMap;
 
@@ -23,7 +25,6 @@ public class PrepareParamsForPredict {
             InputStream fis = treeOfParams.openStream();
             ObjectInputStream ois = new ObjectInputStream(fis);
             trees = (TreeMap<Params,TreeMap<String,Integer>>) ois.readObject();
-            System.out.println("----------- " + trees.size());
             ois.close();
             fis.close();
         } catch (FileNotFoundException e) {
@@ -36,10 +37,9 @@ public class PrepareParamsForPredict {
         return trees;
     }
 
-    public  String safeParamsFromLandToMap(HttpServletRequest req, ServletContext context){
+    public  String safeParamsFromLandToMap(HttpServletRequest req, ServletContext context) throws IOException {
         if(req != null){
-            VisitToTweakBit app = new VisitToTweakBit();
-            DataParser dataParser = new DataParser(new StringBuilder(), app, initializeTheTreeOfParams(context), req);
+            DataParser dataParser = new DataParser(new StringBuilder(), initializeTheTreeOfParams(context), req);
             return dataParser.getToFile().toString();
         }else {
             return "null";
