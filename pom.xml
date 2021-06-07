@@ -30,7 +30,7 @@
 
         <!-- Scala binary version: DL4J's Spark and UI functionality are released with both Scala 2.10 and 2.11 support -->
         <scala.binary.version>2.11</scala.binary.version>
-        <logback.version>1.1.7</logback.version>
+        <logback.version>1.2.0</logback.version>
 
     </properties>
 
